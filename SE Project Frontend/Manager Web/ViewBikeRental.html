@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Manager - Rental Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Slide Bar cho Bộ lọc trạng thái */
+        #status-indicator {
+            position: absolute;
+            background: #22c55e;
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 0;
+        }
+        .status-btn { position: relative; z-index: 10; transition: color 0.3s; }
+        
+        /* Hiệu ứng nhấp nháy cho xe đang hoạt động */
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen">
+
+    <nav class="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-[#00a859] font-bold text-xl">
+            <i class="fas fa-chart-line"></i>
+            <span>Ecopark Monitor</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden md:block">
+                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Server Status</p>
+                <p class="text-xs font-bold text-green-500 flex items-center justify-end"><span class="live-dot"></span> Đang kết nối</p>
+            </div>
+            <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold">M</div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Đang được thuê</p>
+                <div class="flex items-end gap-2">
+                    <span class="text-3xl font-black text-slate-800">42</span>
+                    <span class="text-xs text-green-500 font-bold mb-1"><i class="fas fa-arrow-up"></i> 12%</span>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Xe sẵn sàng</p>
+                <span class="text-3xl font-black text-slate-800">128</span>
+            </div>
+            <div class="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Doanh thu tạm tính</p>
+                <span class="text-3xl font-black text-green-600">3.2M P</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h2 class="text-xl font-bold text-slate-800">Trạng thái thuê chi tiết</h2>
+            
+            <div class="relative bg-gray-200/50 p-1 rounded-2xl flex" id="filterGroup">
+                <div id="status-indicator"></div>
+                <button onclick="filterStatus(this, 'in-use')" class="status-btn px-6 py-2.5 rounded-xl text-xs font-bold text-white">Đang thuê</button>
+                <button onclick="filterStatus(this, 'pending')" class="status-btn px-6 py-2.5 rounded-xl text-xs font-bold text-gray-500">Chờ thanh toán</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                            <th class="px-8 py-5">Người thuê</th>
+                            <th class="px-8 py-5">Mã xe / Trạm</th>
+                            <th class="px-8 py-5">Bắt đầu</th>
+                            <th class="px-8 py-5">Thời gian</th>
+                            <th class="px-8 py-5 text-right">Tạm tính</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statusTableBody" class="divide-y divide-gray-50">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const rentalData = {
+            'in-use': [
+                { user: 'Nguyễn Văn A', bike: 'EB-101', station: 'Rừng Cọ', start: '14:20', duration: '45 phút', cost: '15.000 P' },
+                { user: 'Trần Thị B', bike: 'EB-302', station: 'West Bay', start: '14:55', duration: '10 phút', cost: '5.000 P' },
+                { user: 'Lê Văn C', bike: 'MB-005', station: 'Aquabay', start: '14:10', duration: '55 phút', cost: '12.000 P' }
+            ],
+            'pending': [
+                { user: 'Phạm Minh D', bike: 'EB-909', station: 'Swan Lake', start: '13:00', duration: '120 phút', cost: '40.000 P' }
+            ]
+        };
+
+        function filterStatus(el, status) {
+            // Slide Bar chuyển động
+            const indicator = document.getElementById('status-indicator');
+            indicator.style.width = el.offsetWidth + 'px';
+            indicator.style.height = el.offsetHeight + 'px';
+            indicator.style.left = el.offsetLeft + 'px';
+
+            // Đổi màu text nút
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.classList.remove('text-white');
+                btn.classList.add('text-gray-500');
+            });
+            el.classList.add('text-white');
+            el.classList.remove('text-gray-500');
+
+            renderTable(status);
+        }
+
+        function renderTable(status) {
+            const tbody = document.getElementById('statusTableBody');
+            const data = rentalData[status];
+            
+            tbody.innerHTML = data.map(item => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-[10px] font-bold">
+                                ${item.user.charAt(0)}
+                            </div>
+                            <span class="text-sm font-bold text-slate-700">${item.user}</span>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5">
+                        <p class="text-sm font-bold text-slate-800">${item.bike}</p>
+                        <p class="text-[10px] text-gray-400">${item.station}</p>
+                    </td>
+                    <td class="px-8 py-5 text-xs text-slate-500">${item.start}</td>
+                    <td class="px-8 py-5">
+                        <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold">
+                            <i class="far fa-clock mr-1"></i> ${item.duration}
+                        </span>
+                    </td>
+                    <td class="px-8 py-5 text-right font-black text-green-600 text-sm">${item.cost}</td>
+                </tr>
+            `).join('');
+        }
+
+        window.onload = () => {
+            filterStatus(document.querySelector('.status-btn'), 'in-use');
+        };
+    </script>
+</body>
+</html>

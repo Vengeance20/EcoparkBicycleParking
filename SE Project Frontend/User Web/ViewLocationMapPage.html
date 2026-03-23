@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản đồ trạm xe Ecopark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #map { height: 100%; width: 100%; z-index: 1; }
+        .station-card.active { border-color: #10b981; background-color: #f0fdf4; }
+        .custom-div-icon {
+            background: #10b981;
+            border: 3px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-center;
+            color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden">
+
+    <nav class="bg-white border-b border-gray-100 px-6 py-3 flex justify-between items-center shadow-sm z-[1000]">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#10b981] rounded-full flex items-center justify-center text-white text-xl">
+                <i class="fas fa-bicycle"></i>
+            </div>
+            <span class="font-bold text-xl text-slate-800">Ecopark Bike</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+                <p class="text-sm font-bold text-slate-800">Nguyễn Văn A</p>
+                <p class="text-xs text-gray-400">Thành viên Silver</p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">NA</div>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex overflow-hidden">
+        
+        <aside class="w-full md:w-[400px] bg-white border-r border-gray-100 flex flex-col z-[500] shadow-xl">
+            <div class="p-4 space-y-4 shadow-sm">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+                    <input type="text" id="searchInput" onkeyup="filterStations()" placeholder="Tìm tên trạm..." 
+                           class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div class="flex gap-2">
+                    <button id="btnNear" onclick="sortStations('distance')" class="flex-1 py-2 bg-green-600 text-white rounded-lg text-xs font-bold transition">Gần nhất</button>
+                    <button id="btnMost" onclick="sortStations('bikes')" class="flex-1 py-2 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-200 transition">Nhiều xe nhất</button>
+                </div>
+            </div>
+
+            <div id="stationList" class="flex-1 overflow-y-auto p-4 space-y-4">
+                </div>
+        </aside>
+
+        <section class="flex-1 relative">
+            <div id="map"></div>
+        </section>
+    </main>
+
+    <script>
+        let stations = [
+            { id: 1, name: "Trạm Rừng Cọ - Block A", lat: 20.9592, lng: 105.9365, bikes: 12, slots: 5, distance: 450, address: "Sảnh tòa A1" },
+            { id: 2, name: "Trạm Park River", lat: 20.9635, lng: 105.9320, bikes: 0, slots: 20, distance: 1200, address: "Cổng Park River" },
+            { id: 3, name: "Trạm West Bay", lat: 20.9415, lng: 105.9420, bikes: 8, slots: 2, distance: 2500, address: "Tòa D West Bay" },
+            { id: 4, name: "Trạm Thủy Nguyên", lat: 20.9430, lng: 105.9460, bikes: 15, slots: 10, distance: 800, address: "Phố Thủy Nguyên" }
+        ];
+
+        const map = L.map('map').setView([20.9520, 105.9380], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let markers = {};
+
+        function addMarkers() {
+            stations.forEach(s => {
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%;"><i class="fas fa-bicycle text-xs"></i></div>`,
+                    iconSize: [30, 30]
+                });
+
+                const marker = L.marker([s.lat, s.lng], { icon: icon }).addTo(map)
+                    .bindPopup(`<b class="text-green-600">${s.name}</b><br>Còn ${s.bikes} xe`);
+                
+                markers[s.id] = marker;
+            });
+        }
+
+        function renderStations(data) {
+            const list = document.getElementById('stationList');
+            list.innerHTML = '';
+            data.forEach(s => {
+                list.innerHTML += `
+                    <div onclick="focusStation(${s.id})" id="card-${s.id}" class="station-card p-4 bg-white border border-gray-100 rounded-2xl hover:border-green-400 transition-all cursor-pointer shadow-sm">
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="font-bold text-slate-800">${s.name}</h4>
+                            <span class="text-[10px] ${s.bikes > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'} px-2 py-1 rounded-full font-bold">
+                                ${s.bikes > 0 ? 'Còn xe' : 'Hết xe'}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-3 italic">${s.address}</p>
+                        <div class="flex justify-between items-center text-sm">
+                            <div class="flex gap-4">
+                                <span class="flex items-center font-semibold"><i class="fas fa-bicycle mr-1.5 text-green-500"></i> ${s.bikes}</span>
+                                <span class="flex items-center font-semibold"><i class="fas fa-parking mr-1.5 text-blue-500"></i> ${s.slots}</span>
+                            </div>
+                            <span class="text-xs text-gray-400 font-medium">${s.distance}m</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function focusStation(id) {
+            const s = stations.find(x => x.id === id);
+            map.flyTo([s.lat, s.lng], 16); 
+            markers[id].openPopup();
+
+            document.querySelectorAll('.station-card').forEach(el => el.classList.remove('active'));
+            document.getElementById(`card-${id}`).classList.add('active');
+        }
+
+        function filterStations() {
+            let val = document.getElementById('searchInput').value.toLowerCase();
+            renderStations(stations.filter(s => s.name.toLowerCase().includes(val)));
+        }
+
+        function sortStations(type) {
+            const btnNear = document.getElementById('btnNear');
+            const btnMost = document.getElementById('btnMost');
+
+            const activeClasses = "bg-green-600 text-white".split(" ");
+            const inactiveClasses = "bg-gray-100 text-gray-500 hover:bg-gray-200".split(" ");
+
+            if (type === 'distance') {
+                stations.sort((a, b) => a.distance - b.distance);
+                
+                btnNear.classList.add(...activeClasses);
+                btnNear.classList.remove(...inactiveClasses);
+                
+                btnMost.classList.remove(...activeClasses);
+                btnMost.classList.add(...inactiveClasses);
+            } else {
+                stations.sort((a, b) => b.bikes - a.bikes);
+                
+                btnMost.classList.add(...activeClasses);
+                btnMost.classList.remove(...inactiveClasses);
+                
+                btnNear.classList.remove(...activeClasses);
+                btnNear.classList.add(...inactiveClasses);
+            }
+
+            renderStations(stations);
+        }
+
+        addMarkers();
+        renderStations(stations);
+    </script>
+</body>
+</html>

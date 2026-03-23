@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Manager - Revenue Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Slide Bar cho Filter Thời gian */
+        #time-indicator {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 0;
+        }
+        .time-btn { position: relative; z-index: 10; transition: color 0.3s; }
+        
+        .stat-card { transition: transform 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen">
+
+    <nav class="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-[#00a859] font-bold text-xl">
+            <i class="fas fa-wallet"></i>
+            <span>Ecopark Finance</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="bg-gray-100 p-2 rounded-full text-gray-400 hover:text-green-600"><i class="fas fa-download"></i> Export</button>
+            <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold">M</div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div>
+                <h2 class="text-3xl font-black text-slate-800">Doanh thu hệ thống</h2>
+                <p class="text-sm text-gray-400">Cập nhật lúc: 23:20, 20/03/2026</p>
+            </div>
+
+            <div class="relative bg-gray-200/60 p-1.5 rounded-2xl flex shadow-inner" id="timeGroup">
+                <div id="time-indicator"></div>
+                <button onclick="updateTime(this, 'today')" class="time-btn px-6 py-3 rounded-xl text-xs font-bold text-green-600">Hôm nay</button>
+                <button onclick="updateTime(this, 'week')" class="time-btn px-6 py-3 rounded-xl text-xs font-bold text-gray-400">Tuần này</button>
+                <button onclick="updateTime(this, 'month')" class="time-btn px-6 py-3 rounded-xl text-xs font-bold text-gray-400">Tháng này</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card bg-white p-6 rounded-[35px] shadow-sm border border-gray-100">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Tổng doanh thu</p>
+                <p id="totalRev" class="text-2xl font-black text-green-600">8.500.000 P</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-[35px] shadow-sm border border-gray-100">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Số chuyến xe</p>
+                <p id="totalRides" class="text-2xl font-black text-slate-800">142</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-[35px] shadow-sm border border-gray-100">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Trung bình/chuyến</p>
+                <p id="avgRev" class="text-2xl font-black text-slate-800">60.000 P</p>
+            </div>
+            <div class="stat-card bg-slate-900 p-6 rounded-[35px] shadow-xl">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-white/50">Tăng trưởng</p>
+                <p class="text-2xl font-black text-green-400">+18.4%</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-green-500"></i> Xu hướng doanh thu
+                </h3>
+                <canvas id="revenueChart" height="250"></canvas>
+            </div>
+
+            <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                <h3 class="font-bold text-slate-800 mb-6">Top trạm sinh lời</h3>
+                <div class="space-y-6" id="topStations">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let myChart;
+        const dataSet = {
+            'today': { rev: '8.5M P', rides: 142, avg: '60K P', chart: [1.2, 0.8, 1.5, 2.1, 1.8, 1.1], labels: ['8h', '10h', '12h', '14h', '16h', '18h'] },
+            'week': { rev: '52.0M P', rides: 980, avg: '53K P', chart: [5, 8, 7, 12, 10, 6, 4], labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'] },
+            'month': { rev: '210M P', rides: 3800, avg: '55K P', chart: [40, 55, 48, 67], labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'] }
+        };
+
+        function updateTime(el, mode) {
+            // Slide Bar
+            const indicator = document.getElementById('time-indicator');
+            indicator.style.width = el.offsetWidth + 'px';
+            indicator.style.height = el.offsetHeight + 'px';
+            indicator.style.left = el.offsetLeft + 'px';
+
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.replace('text-green-600', 'text-gray-400');
+            });
+            el.classList.replace('text-gray-400', 'text-green-600');
+
+            // Cập nhật số liệu
+            const d = dataSet[mode];
+            document.getElementById('totalRev').innerText = d.rev;
+            document.getElementById('totalRides').innerText = d.rides;
+            document.getElementById('avgRev').innerText = d.avg;
+
+            updateChart(d.labels, d.chart);
+            renderTopStations();
+        }
+
+        function updateChart(labels, data) {
+            if (myChart) myChart.destroy();
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (Triệu P)',
+                        data: data,
+                        backgroundColor: '#22c55e',
+                        borderRadius: 12,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        function renderTopStations() {
+            const list = [
+                { name: 'Aquabay', rev: '2.5M P', percent: 85 },
+                { name: 'West Bay', rev: '1.8M P', percent: 60 },
+                { name: 'Rừng Cọ', rev: '1.2M P', percent: 45 }
+            ];
+            document.getElementById('topStations').innerHTML = list.map(s => `
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm font-bold">
+                        <span class="text-slate-700">${s.name}</span>
+                        <span class="text-green-600">${s.rev}</span>
+                    </div>
+                    <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div class="bg-green-500 h-full" style="width: ${s.percent}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = () => {
+            updateTime(document.querySelector('.time-btn'), 'today');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Bike - Danh sách xe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hiệu ứng thanh trượt màu xanh */
+        .filter-container { position: relative; }
+        #slider {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 100%;
+            background-color: #22c55e; /* green-500 */
+            border-radius: 9999px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
+        }
+        .filter-btn { position: relative; z-index: 10; transition: color 0.3s; }
+        .animate-card { animation: fadeInUp 0.4s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-green-600 font-bold text-xl">
+            <i class="fas fa-bicycle"></i>
+            <span>Ecopark Bike</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <select id="stationSelect" onchange="updateStationUI()" class="text-sm font-bold border-none bg-transparent focus:ring-0 cursor-pointer text-slate-700">
+                <option value="Rừng Cọ - Block A">Trạm: Rừng Cọ - Block A</option>
+                <option value="Park River">Trạm: Park River</option>
+                <option value="West Bay">Trạm: West Bay</option>
+            </select>
+            <button onclick="window.location.href='ViewLocationMapPage.html'" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row gap-6 justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold text-slate-800">Danh sách xe đạp hiện có</h2>
+            
+            <div class="filter-container bg-gray-200/50 p-1 rounded-full flex items-center w-fit">
+                <div id="slider"></div>
+                <button onclick="filterBikes('Tất cả', this)" class="filter-btn px-6 py-2 text-sm font-bold text-white">Tất cả</button>
+                <button onclick="filterBikes('Xe thường', this)" class="filter-btn px-6 py-2 text-sm font-bold text-gray-500">Xe thường</button>
+            </div>
+        </div>
+
+        <div id="bikeList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            </div>
+    </main>
+
+    <script>
+        const bikeData = {
+            "Rừng Cọ - Block A": [
+                { id: "EB-101", name: "Xe điện City S1", type: "Xe điện", battery: "85%", price: "30k/h", img: "https://images.unsplash.com/photo-1593138774270-61168046ad42?w=400" },
+                { id: "EB-102", name: "Xe điện Pro Max", type: "Xe điện", battery: "45%", price: "35k/h", img: "https://images.unsplash.com/photo-1532124958905-59399666af88?w=400" },
+                { id: "NB-201", name: "Xe đạp Mini", type: "Xe thường", battery: "N/A", price: "10k/h", img: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400" },
+                { id: "NB-202", name: "Xe đạp Phổ thông", type: "Xe thường", battery: "N/A", price: "10k/h", img: "https://images.unsplash.com/photo-1501147830916-ce44a6359892?w=400" }
+            ],
+            "Park River": [
+                { id: "EB-301", name: "Xe điện Tourer", type: "Xe điện", battery: "100%", price: "35k/h", img: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=400" },
+                { id: "NB-302", name: "Xe địa hình MTB", type: "Xe thường", battery: "N/A", price: "20k/h", img: "https://images.unsplash.com/photo-1576433732326-479611f04ef0?w=400" },
+                { id: "NB-303", name: "Xe đạp Thể thao", type: "Xe thường", battery: "N/A", price: "15k/h", img: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400" }
+            ],
+            "West Bay": [
+                { id: "EB-501", name: "Xe điện City S1", type: "Xe điện", battery: "62%", price: "30k/h", img: "https://images.unsplash.com/photo-1593138774270-61168046ad42?w=400" },
+                { id: "EB-502", name: "Xe điện Gấp", type: "Xe điện", battery: "20%", price: "25k/h", img: "https://images.unsplash.com/photo-1532124958905-59399666af88?w=400" },
+                { id: "NB-503", name: "Xe đạp Trẻ em", type: "Xe thường", battery: "N/A", price: "8k/h", img: "https://images.unsplash.com/photo-1501147830916-ce44a6359892?w=400" },
+                { id: "NB-504", name: "Xe đạp Mini", type: "Xe thường", battery: "N/A", price: "10k/h", img: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400" }
+            ]
+        };
+
+        function moveSlider(element) {
+            const slider = document.getElementById('slider');
+            slider.style.width = element.offsetWidth + 'px';
+            slider.style.left = element.offsetLeft + 'px';
+        }
+
+        function filterBikes(type, btnElement) {
+            // Hiệu ứng thanh trượt
+            moveSlider(btnElement);
+            
+            // Đổi màu chữ
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.replace('text-white', 'text-gray-500'));
+            btnElement.classList.replace('text-gray-500', 'text-white');
+
+            // Lọc dữ liệu
+            const station = document.getElementById('stationSelect').value;
+            const data = bikeData[station];
+            const filtered = type === 'Tất cả' ? data : data.filter(b => b.type === type);
+            
+            renderBikes(filtered);
+        }
+
+        function renderBikes(list) {
+            const container = document.getElementById('bikeList');
+            container.innerHTML = list.map((bike, index) => `
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 animate-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="relative mb-4 overflow-hidden rounded-2xl h-44">
+                        <img src="${bike.img}" class="w-full h-full object-cover">
+                        <span class="absolute top-2 right-2 px-2 py-1 bg-white/90 rounded-lg text-[10px] font-bold shadow-sm">${bike.type}</span>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-slate-800">${bike.name}</h4>
+                            <p class="text-[10px] text-gray-400 font-mono mt-1">${bike.id}</p>
+                        </div>
+                        <span class="text-green-600 font-bold">${bike.price}</span>
+                    </div>
+                    ${bike.type === 'Xe điện' ? `
+                        <div class="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-xl">
+                            <i class="fas fa-battery-three-quarters text-green-500"></i>
+                            <span>Pin: <b>${bike.battery}</b></span>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateStationUI() {
+            const firstBtn = document.querySelector('.filter-btn');
+            filterBikes('Tất cả', firstBtn);
+        }
+
+        // Khởi tạo mặc định
+        window.onload = () => {
+            const firstBtn = document.querySelector('.filter-btn');
+            moveSlider(firstBtn);
+            updateStationUI();
+        };
+    </script>
+</body>
+</html>
