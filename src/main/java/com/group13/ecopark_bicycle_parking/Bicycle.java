@@ -1,36 +1,30 @@
 package com.group13.ecopark_bicycle_parking;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity // Báo cho Spring Boot biết: "Hãy biến class này thành 1 Bảng trong MySQL"
 @Table(name = "bicycles") // Đặt tên cho bảng trong CSDL là 'bicycles'
-@Data // Của Lombok: Tự động tạo hàm get/set ẩn, giúp code siêu ngắn gọn
 public class Bicycle {
 
     @Id // Đánh dấu đây là Khóa chính (Primary Key)
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Tự động tăng số ID (1, 2, 3...)
-    private Long id;
-
+    private Long bike_id;
+    
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "station_id")
+    private Station station; 
+    
     // Mã xe hiển thị cho người dùng (Ví dụ: ECO-001)
     @Column(unique = true, nullable = false) 
     private String bikeCode;
+    
+    @Column(nullable = false)
+    private String bikeType;
 
     // Trạng thái xe: "Đang hoạt động", "Đang thuê", "Cần sửa chữa"
     @Column(nullable = false)
     private String status;
     
-    // Thuộc bãi đỗ nào (Tạm thời lưu dạng text, sau này sẽ tạo bảng Station và liên kết sau)
-    private String stationName;
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
 	public String getBikeCode() {
 		return bikeCode;
 	}
@@ -47,12 +41,28 @@ public class Bicycle {
 		this.status = status;
 	}
 
-	public String getStationName() {
-		return stationName;
+	public Long getBike_id() {
+		return bike_id;
 	}
 
-	public void setStationName(String stationName) {
-		this.stationName = stationName;
+	public void setBike_id(Long bike_id) {
+		this.bike_id = bike_id;
+	}
+
+	public Station getStation() {
+		return station;
+	}
+
+	public void setStation(Station station) {
+		this.station = station;
+	}
+
+	public String getBikeType() {
+		return bikeType;
+	}
+
+	public void setBikeType(String bikeType) {
+		this.bikeType = bikeType;
 	}
 
 }
