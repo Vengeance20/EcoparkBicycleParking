@@ -1,66 +1,67 @@
 package com.group13.ecopark_bicycle_parking;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller // Báo cho Spring Boot: "Đây là Lễ tân tiếp nhận yêu cầu từ trình duyệt"
+@RestController // Đổi thành RestController: Báo cho Spring Boot biết đây là trạm phát dữ liệu JSON
+@RequestMapping("/api/v1/bicycles") // Đặt tên miền API chuẩn quốc tế cho toàn bộ class này
+@CrossOrigin(origins = "*") // Mở cửa cho Frontend (React/Vue/JS) gọi vào mà không bị lỗi CORS
 public class BicycleController {
 
-    @Autowired // "Phép thuật" tự động tiêm (Inject) người thủ kho vào đây để xài
+    @Autowired
     private BicycleRepository bicycleRepository;
 
-    // Khi khách hàng truy cập vào link http://localhost:8080/xe-dap, hàm này sẽ chạy
-    @GetMapping("/xe-dap")
-    public String hienThiDanhSachXe(Model model) {
-        
-        // 1. Nhờ thủ kho lấy toàn bộ danh sách xe từ Cơ sở dữ liệu MySQL
-        List<Bicycle> danhSachXeThucTe = bicycleRepository.findAll();
-
-        // 2. Đóng gói danh sách đó, dán cho nó cái nhãn tên là "danhSachXe"
-        model.addAttribute("danhSachXe", danhSachXeThucTe);
-
-        // 3. Trả về tên của file HTML sẽ làm nhiệm vụ hiển thị dữ liệu này
-        // (Chúng ta sẽ tạo file "danh-sach-xe.html" ở Bước 4)
-        return "danh-sach-xe"; 
-    }
-    
- // 1. Mở trang Form để nhập thông tin xe mới
-    @GetMapping("/xe-dap/them")
-    public String hienThiFormThem(Model model) {
-        // Tạo một chiếc xe rỗng đưa ra giao diện để người dùng điền vào
-        model.addAttribute("xe", new Bicycle()); 
-        return "form-xe";
+    // 1. LẤY DANH SÁCH XE (Frontend gọi GET /api/v1/bicycles)
+    @GetMapping
+    public ResponseEntity<List<Bicycle>> layDanhSachXe() {
+        List<Bicycle> danhSachXe = bicycleRepository.findAll();
+        // Trả về thẳng cục dữ liệu và mã 200 (OK)
+        return ResponseEntity.ok(danhSachXe); 
     }
 
-    // 2. Nhận dữ liệu từ Form gửi về và Lưu vào Database (Dùng chung cho cả Thêm và Sửa)
-    @PostMapping("/xe-dap/luu")
-    public String luuXeDap(@ModelAttribute("xe") Bicycle xe) {
-        // Thủ kho gọi hàm save(). Nếu xe có ID rồi thì là cập nhật, chưa có thì là thêm mới.
-        bicycleRepository.save(xe); 
-        // Lưu xong thì tự động chuyển hướng (redirect) về lại trang danh sách
-        return "redirect:/xe-dap"; 
+    // 2. LẤY CHI TIẾT 1 CHIẾC XE (Để Frontend nhét vào Form sửa)
+    @GetMapping("/{id}")
+    public ResponseEntity<Bicycle> layChiTietXe(@PathVariable Long id) {
+        return bicycleRepository.findById(id)
+                .map(xe -> ResponseEntity.ok(xe)) // Nếu tìm thấy, trả về dữ liệu xe
+                .orElse(ResponseEntity.notFound().build()); // Nếu không thấy, báo lỗi 404
     }
 
-    // 3. Mở trang Form và điền sẵn thông tin của xe cần Sửa
-    @GetMapping("/xe-dap/sua/{id}")
-    public String hienThiFormSua(@PathVariable("id") Long id, Model model) {
-        // Tìm chiếc xe theo ID, nếu không thấy thì trả về null
-        Bicycle xeCanSua = bicycleRepository.findById(id).orElse(null);
-        model.addAttribute("xe", xeCanSua);
-        return "form-xe"; // Dùng chung giao diện với trang Thêm mới
+    // 3. THÊM XE MỚI (Frontend gọi POST và gửi cục JSON lên)
+    @PostMapping
+    public ResponseEntity<Bicycle> themXeMoi(@RequestBody Bicycle xeMoi) {
+        // @RequestBody sẽ tự động dịch chuỗi JSON của Frontend thành Object Bicycle
+        Bicycle xeDaLuu = bicycleRepository.save(xeMoi);
+        // Trả về chiếc xe vừa tạo kèm mã 201 (Created)
+        return new ResponseEntity<>(xeDaLuu, HttpStatus.CREATED); 
     }
 
-    // 4. Xóa một chiếc xe theo ID
-    @GetMapping("/xe-dap/xoa/{id}")
-    public String xoaXeDap(@PathVariable("id") Long id) {
-        bicycleRepository.deleteById(id);
-        return "redirect:/xe-dap";
+    // 4. CẬP NHẬT XE ĐÃ CÓ (Frontend gọi PUT và gửi cục JSON lên)
+    @PutMapping("/{id}")
+    public ResponseEntity<Bicycle> capNhatXe(@PathVariable Long id, @RequestBody Bicycle thongTinCapNhat) {
+        return bicycleRepository.findById(id)
+                .map(xeHienTai -> {
+                    // Cập nhật các trường dữ liệu
+                    xeHienTai.setBikeCode(thongTinCapNhat.getBikeCode());
+                    xeHienTai.setStatus(thongTinCapNhat.getStatus());
+                    // Lưu lại xuống Database
+                    Bicycle xeDaCapNhat = bicycleRepository.save(xeHienTai);
+                    return ResponseEntity.ok(xeDaCapNhat);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 5. XÓA XE (Frontend gọi DELETE)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> xoaXe(@PathVariable Long id) {
+        if (bicycleRepository.existsById(id)) {
+            bicycleRepository.deleteById(id);
+            return ResponseEntity.noContent().build(); // Mã 204: Xóa thành công, không có nội dung gì cần trả về
+        }
+        return ResponseEntity.notFound().build(); // Báo lỗi 404 nếu không tìm thấy xe để xóa
     }
 }
