@@ -16,21 +16,19 @@ public class Bicycle {
     
     // Mã xe hiển thị cho người dùng (Ví dụ: ECO-001)
     @Column(unique = true, nullable = false) 
-    private String bikeCode;
+    private String bike_code;
     
     @Column(nullable = false)
-    private String bikeType;
+    private String bike_type;
 
-    // Trạng thái xe: "Đang hoạt động", "Đang thuê", "Cần sửa chữa"
-    @Column(nullable = false)
     private String status;
     
 	public String getBikeCode() {
-		return bikeCode;
+		return bike_code;
 	}
 
 	public void setBikeCode(String bikeCode) {
-		this.bikeCode = bikeCode;
+		this.bike_code = bikeCode;
 	}
 
 	public String getStatus() {
@@ -58,11 +56,11 @@ public class Bicycle {
 	}
 
 	public String getBikeType() {
-		return bikeType;
+		return bike_type;
 	}
 
-	public void setBikeType(String bikeType) {
-		this.bikeType = bikeType;
+	public void setBikeType(String bike_type) {
+		this.bike_type = bike_type;
 	}
 
 }
