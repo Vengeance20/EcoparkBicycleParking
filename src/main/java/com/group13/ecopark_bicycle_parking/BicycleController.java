@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 @RestController // Đổi thành RestController: Báo cho Spring Boot biết đây là trạm phát dữ liệu JSON
@@ -33,7 +35,7 @@ public class BicycleController {
 
     // 3. THÊM XE MỚI (Frontend gọi POST và gửi cục JSON lên)
     @PostMapping
-    public ResponseEntity<Bicycle> themXeMoi(@RequestBody Bicycle xeMoi) {
+    public ResponseEntity<Bicycle> themXeMoi(@Valid @RequestBody Bicycle xeMoi) {
         // @RequestBody sẽ tự động dịch chuỗi JSON của Frontend thành Object Bicycle
         Bicycle xeDaLuu = bicycleRepository.save(xeMoi);
         // Trả về chiếc xe vừa tạo kèm mã 201 (Created)
@@ -42,13 +44,13 @@ public class BicycleController {
 
     // 4. CẬP NHẬT XE ĐÃ CÓ (Frontend gọi PUT và gửi cục JSON lên)
     @PutMapping("/{id}")
-    public ResponseEntity<Bicycle> capNhatXe(@PathVariable Long id, @RequestBody Bicycle thongTinCapNhat) {
+    public ResponseEntity<Bicycle> capNhatXe(@PathVariable Long id, @Valid @RequestBody Bicycle thongTinCapNhat) {
         return bicycleRepository.findById(id)
                 .map(xeHienTai -> {
                     // Cập nhật các trường dữ liệu
                     xeHienTai.setBikeCode(thongTinCapNhat.getBikeCode());
                     xeHienTai.setStatus(thongTinCapNhat.getStatus());
-                    xeHienTai.setBikeType(thongTinCapNhat.getBikeType());                  
+                    xeHienTai.setBikeType(thongTinCapNhat.getBikeType());
                     // Lưu lại xuống Database
                     Bicycle xeDaCapNhat = bicycleRepository.save(xeHienTai);
                     return ResponseEntity.ok(xeDaCapNhat);

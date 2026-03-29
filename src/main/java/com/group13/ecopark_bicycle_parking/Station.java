@@ -8,7 +8,7 @@ public class Station {
 	
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Long id;
+    private Long station_id;
     
     @Column(nullable = false)
     private String name;
@@ -23,11 +23,11 @@ public class Station {
     private String status; // Trạng thái: "Mở cửa", "Đóng cửa"
 
 	public Long getId() {
-		return id;
+		return station_id;
 	}
 
-	public void setId(Long id) {
-		this.id = id;
+	public void setId(Long station_id) {
+		this.station_id = station_id;
 	}
 
 	public String getName() {
