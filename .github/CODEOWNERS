@@ -13,8 +13,8 @@
 
 # 3. LÃNH THỔ FRONTEND (HTML, CSS, JS)
 # Bất cứ ai sửa giao diện, phải có 1 trong các bạn Frontend duyệt
-/src/main/resources/static/ @WiuHz
-/src/main/resources/templates/ @WiuHz
+/src/main/resources/static/ @WiuHz @Vengeance20
+/src/main/resources/templates/ @WiuHz @Vengeance20
 
 # 4. LUẬT MẶC ĐỊNH CHO CÁC FILE CÒN LẠI (VD: README.md, .gitignore)
 * @Vengeance20
