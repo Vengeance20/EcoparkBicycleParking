@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Manager - Multi-Station System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Slide Bar cho Trạm */
+        #station-indicator {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 0;
+        }
+        .station-btn { position: relative; z-index: 10; white-space: nowrap; transition: color 0.3s; }
+        
+        /* Ẩn thanh cuộn nhưng vẫn cuộn được */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Modal hiệu ứng */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; animation: modalIn 0.3s ease-out; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen">
+
+    <nav class="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-[#00a859] font-bold text-xl">
+            <i class="fas fa-microchip"></i>
+            <span>Ecopark Admin</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-100 text-slate-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">Hệ thống 9 trạm</div>
+            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-green-100">M</div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Bản ghi xe theo trạm</h2>
+                <p class="text-sm text-gray-400">Quản lý trạng thái xe thời gian thực trên toàn khu đô thị</p>
+            </div>
+            <button onclick="openModal('add')" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl hover:bg-slate-800 transition-all flex items-center gap-2">
+                <i class="fas fa-plus-circle text-green-400"></i> Khai báo xe mới
+            </button>
+        </div>
+
+        <div class="relative bg-gray-200/50 p-1.5 rounded-2xl flex gap-2 overflow-x-auto no-scrollbar mb-10 shadow-inner" id="stationGroup">
+            <div id="station-indicator"></div>
+            <button onclick="selectStation(this, 'Rừng Cọ')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-green-600">Trạm Rừng Cọ</button>
+            <button onclick="selectStation(this, 'West Bay')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm West Bay</button>
+            <button onclick="selectStation(this, 'Aquabay')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Aquabay</button>
+            <button onclick="selectStation(this, 'Park River')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Park River</button>
+            <button onclick="selectStation(this, 'Thủy Nguyên')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Thủy Nguyên</button>
+            <button onclick="selectStation(this, 'Thảo Nguyên')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Thảo Nguyên</button>
+            <button onclick="selectStation(this, 'Mimosa')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Mimosa</button>
+            <button onclick="selectStation(this, 'Swan Lake')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Swan Lake</button>
+            <button onclick="selectStation(this, 'Grand Park')" class="station-btn px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-gray-400">Trạm Grand Park</button>
+        </div>
+
+        <div class="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 bg-slate-50 border-b border-gray-100 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-500 uppercase">Danh sách xe tại: <span id="labelStation" class="text-green-600">Rừng Cọ</span></span>
+                <span id="bikeCount" class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-[10px] font-bold">0 xe</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
+                            <th class="px-8 py-5">Mã định danh</th>
+                            <th class="px-8 py-5">Phân loại</th>
+                            <th class="px-8 py-5">Trạng thái pin/vận hành</th>
+                            <th class="px-8 py-5 text-right">Tùy chỉnh</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bikeTableBody" class="divide-y divide-gray-50"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="bikeModal" class="modal p-6">
+        <div class="bg-white w-full max-w-md rounded-[35px] p-8 shadow-2xl relative">
+            <h3 id="modalTitle" class="text-xl font-bold text-slate-800 mb-8">Thông tin xe</h3>
+            <div class="space-y-5">
+                <input type="hidden" id="editIndex">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Mã xe (Ví dụ: EB-100)</label>
+                    <input type="text" id="bikeId" class="w-full bg-gray-50 border-2 border-transparent focus:border-green-500 focus:bg-white p-4 rounded-2xl text-sm outline-none transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Loại xe</label>
+                    <select id="bikeType" class="w-full bg-gray-50 border-2 border-transparent focus:border-green-500 focus:bg-white p-4 rounded-2xl text-sm outline-none transition-all">
+                        <option value="Xe điện">Xe điện (E-Bike)</option>
+                        <option value="Xe thường">Xe thường (Manual)</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Trạng thái hiển thị</label>
+                    <input type="text" id="bikeStatus" placeholder="Ví dụ: 95% hoặc Sẵn sàng" class="w-full bg-gray-50 border-2 border-transparent focus:border-green-500 focus:bg-white p-4 rounded-2xl text-sm outline-none transition-all">
+                </div>
+            </div>
+            <div class="flex gap-4 mt-10">
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl hover:bg-gray-200 transition-all">Hủy bỏ</button>
+                <button onclick="saveBike()" class="flex-1 bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-green-100 hover:bg-green-700 transition-all">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStation = 'Rừng Cọ';
+        // Dữ liệu ban đầu cho 9 trạm
+        let stationData = {
+            'Rừng Cọ': [{id:'EB-101', type:'Xe điện', status:'85%'}, {id:'MB-202', type:'Xe thường', status:'Sẵn sàng'}],
+            'West Bay': [{id:'EB-301', type:'Xe điện', status:'90%'}, {id:'EB-302', type:'Xe điện', status:'15%'}],
+            'Aquabay': [{id:'EB-505', type:'Xe điện', status:'100%'}],
+            'Park River': [{id:'MB-404', type:'Xe thường', status:'Bảo trì'}],
+            'Thủy Nguyên': [{id:'EB-601', type:'Xe điện', status:'70%'}],
+            'Thảo Nguyên': [{id:'MB-707', type:'Xe thường', status:'Sẵn sàng'}],
+            'Mimosa': [{id:'EB-808', type:'Xe điện', status:'50%'}],
+            'Swan Lake': [{id:'EB-909', type:'Xe điện', status:'99%'}],
+            'Grand Park': [{id:'MB-001', type:'Xe thường', status:'Sẵn sàng'}]
+        };
+
+        function selectStation(el, name) {
+            const indicator = document.getElementById('station-indicator');
+            indicator.style.width = el.offsetWidth + 'px';
+            indicator.style.height = el.offsetHeight + 'px';
+            indicator.style.left = el.offsetLeft + 'px';
+            
+            document.querySelectorAll('.station-btn').forEach(btn => {
+                btn.classList.remove('text-green-600');
+                btn.classList.add('text-gray-400');
+            });
+            el.classList.add('text-green-600');
+            el.classList.remove('text-gray-400');
+            
+            currentStation = name;
+            document.getElementById('labelStation').innerText = name;
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('bikeTableBody');
+            const data = stationData[currentStation] || [];
+            document.getElementById('bikeCount').innerText = `${data.length} xe`;
+            
+            tbody.innerHTML = data.map((bike, index) => `
+                <tr class="group hover:bg-slate-50 transition-all">
+                    <td class="px-8 py-5 font-bold text-slate-700 text-sm tracking-tight">${bike.id}</td>
+                    <td class="px-8 py-5">
+                        <span class="px-3 py-1 rounded-lg text-[10px] font-bold ${bike.type === 'Xe điện' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}">
+                            ${bike.type}
+                        </span>
+                    </td>
+                    <td class="px-8 py-5">
+                        <span class="text-xs font-bold ${bike.status.includes('%') ? 'text-green-600' : 'text-amber-600'}">${bike.status}</span>
+                    </td>
+                    <td class="px-8 py-5 text-right">
+                        <button onclick="openModal('edit', ${index})" class="p-2 text-slate-300 hover:text-blue-500 transition-colors"><i class="fas fa-pen text-xs"></i></button>
+                        <button onclick="deleteBike(${index})" class="p-2 text-slate-300 hover:text-red-500 transition-colors"><i class="fas fa-trash text-xs"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openModal(mode, index = null) {
+            const modal = document.getElementById('bikeModal');
+            document.getElementById('modalTitle').innerText = mode === 'add' ? 'Thêm xe vào trạm' : 'Cập nhật thông tin xe';
+            document.getElementById('editIndex').value = (index === null) ? "" : index;
+
+            if (mode === 'edit') {
+                const bike = stationData[currentStation][index];
+                document.getElementById('bikeId').value = bike.id;
+                document.getElementById('bikeType').value = bike.type;
+                document.getElementById('bikeStatus').value = bike.status;
+            } else {
+                document.getElementById('bikeId').value = '';
+                document.getElementById('bikeStatus').value = '';
+            }
+            modal.classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('bikeModal').classList.remove('active'); }
+
+        function saveBike() {
+            const idx = document.getElementById('editIndex').value;
+            const bikeObj = {
+                id: document.getElementById('bikeId').value,
+                type: document.getElementById('bikeType').value,
+                status: document.getElementById('bikeStatus').value
+            };
+
+            if (idx === "") {
+                stationData[currentStation].push(bikeObj);
+            } else {
+                stationData[currentStation][idx] = bikeObj;
+            }
+            renderTable();
+            closeModal();
+        }
+
+        function deleteBike(index) {
+            if(confirm(`Xác nhận xóa xe ${stationData[currentStation][index].id} khỏi trạm này?`)) {
+                stationData[currentStation].splice(index, 1);
+                renderTable();
+            }
+        }
+
+        window.onload = () => {
+            const firstBtn = document.querySelector('.station-btn');
+            selectStation(firstBtn, 'Rừng Cọ');
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package com.group13.ecopark_bicycle_parking;
+package com.group13.ecopark_bicycle_parking.bicycle;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

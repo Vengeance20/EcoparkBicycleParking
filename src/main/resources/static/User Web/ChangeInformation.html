@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Bike - Cài đặt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Thanh slide bar chạy mượt */
+        #tab-indicator {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 0;
+        }
+        .tab-btn { position: relative; z-index: 10; cursor: pointer; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-field {
+            border: 2px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #22c55e;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen">
+
+    <nav class="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-[#00a859] font-bold text-xl">
+            <i class="fas fa-bicycle"></i>
+            <span>Ecopark Bike</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="text-right">
+                <p class="text-sm font-bold text-slate-800">Nguyễn Văn A</p>
+                <p class="text-[10px] text-gray-400 font-bold uppercase">Thành viên Silver</p>
+            </div>
+            <div class="w-10 h-10 bg-[#00a859] rounded-full flex items-center justify-center text-white font-bold">A</div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-6 mt-6">
+        <h2 class="text-2xl font-bold text-slate-800 mb-8">Cài đặt tài khoản</h2>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="w-full lg:w-72">
+                <div class="relative bg-gray-100/80 p-1.5 rounded-2xl flex flex-col gap-1" id="tabGroup">
+                    <div id="tab-indicator"></div>
+                    
+                    <button onclick="switchTab(this, 'profile')" class="tab-btn p-4 rounded-xl text-sm font-bold flex items-center gap-3 text-green-600">
+                        <i class="fas fa-user-circle w-5"></i> Thông tin cá nhân
+                    </button>
+                    <button onclick="switchTab(this, 'security')" class="tab-btn p-4 rounded-xl text-sm font-bold flex items-center gap-3 text-gray-500">
+                        <i class="fas fa-shield-alt w-5"></i> Mật khẩu & Bảo mật
+                    </button>
+                    <button onclick="switchTab(this, 'history')" class="tab-btn p-4 rounded-xl text-sm font-bold flex items-center gap-3 text-gray-500">
+                        <i class="fas fa-history w-5"></i> Lịch sử chuyến đi
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 min-h-[500px]">
+                
+                <div id="profile" class="tab-content active">
+                    <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-50">
+                        <div class="relative">
+                            <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=00a859&color=fff" class="w-24 h-24 rounded-3xl ring-4 ring-gray-50">
+                            <label class="absolute -bottom-2 -right-2 bg-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center cursor-pointer">
+                                <i class="fas fa-camera text-xs text-gray-400"></i>
+                                <input type="file" class="hidden">
+                            </label>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">Ảnh hồ sơ</h3>
+                            <p class="text-xs text-gray-400">Dùng để nhận diện khi thuê xe</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Họ và tên</label>
+                            <input type="text" value="Nguyễn Văn A" class="input-field bg-gray-50 p-4 rounded-2xl text-sm outline-none">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Số điện thoại</label>
+                            <input type="text" value="0987 654 321" class="input-field bg-gray-50 p-4 rounded-2xl text-sm outline-none">
+                        </div>
+                    </div>
+                    <button class="w-full mt-10 bg-[#00a859] text-white font-bold py-5 rounded-2xl shadow-xl hover:bg-[#008f4c] transition-all">LƯU THÔNG TIN</button>
+                </div>
+
+                <div id="security" class="tab-content">
+                    <h3 class="font-bold text-lg text-slate-800 mb-6">Đổi mật khẩu</h3>
+                    <div class="space-y-6 max-w-md">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mật khẩu hiện tại</label>
+                            <input type="password" placeholder="••••••••" class="input-field bg-gray-50 p-4 rounded-2xl text-sm outline-none">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mật khẩu mới</label>
+                            <input type="password" placeholder="••••••••" class="input-field bg-gray-50 p-4 rounded-2xl text-sm outline-none">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Xác nhận mật khẩu mới</label>
+                            <input type="password" placeholder="••••••••" class="input-field bg-gray-50 p-4 rounded-2xl text-sm outline-none">
+                        </div>
+                    </div>
+                    <button class="w-full mt-10 bg-[#00a859] text-white font-bold py-5 rounded-2xl shadow-xl hover:bg-[#008f4c] transition-all">CẬP NHẬT MẬT KHẨU</button>
+                </div>
+
+                <div id="history" class="tab-content">
+                    <h3 class="font-bold text-lg text-slate-800 mb-6">Chuyến đi gần đây</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-bicycle"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm text-slate-800">Trạm Rừng Cọ - Block A</p>
+                                    <p class="text-[10px] text-gray-400">20/03/2026 • 15:30 - 16:15</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-green-600 text-sm">-15.000 P</p>
+                                <p class="text-[10px] text-gray-400 italic">Hoàn thành</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm text-slate-800">Trạm West Bay - Tòa C</p>
+                                    <p class="text-[10px] text-gray-400">18/03/2026 • 08:00 - 08:30</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-green-600 text-sm">-25.000 P</p>
+                                <p class="text-[10px] text-gray-400 italic">Hoàn thành</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(el, tabId) {
+            // 1. Di chuyển Slide Bar Indicator
+            const indicator = document.getElementById('tab-indicator');
+            indicator.style.width = el.offsetWidth + 'px';
+            indicator.style.height = el.offsetHeight + 'px';
+            indicator.style.top = el.offsetTop + 'px';
+            indicator.style.left = el.offsetLeft + 'px';
+
+            // 2. Cập nhật trạng thái Active của Button
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('text-green-600');
+                btn.classList.add('text-gray-500');
+            });
+            el.classList.add('text-green-600');
+            el.classList.remove('text-gray-500');
+
+            // 3. Hiển thị nội dung Tab tương ứng
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Tự động khởi tạo vị trí Indicator khi load trang
+        window.onload = () => {
+            const firstTab = document.querySelector('.tab-btn');
+            switchTab(firstTab, 'profile');
+        }
+    </script>
+</body>
+</html>

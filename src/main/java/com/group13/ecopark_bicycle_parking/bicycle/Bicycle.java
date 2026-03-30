@@ -1,4 +1,7 @@
-package com.group13.ecopark_bicycle_parking;
+package com.group13.ecopark_bicycle_parking.bicycle;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.group13.ecopark_bicycle_parking.station.Station;
 
 import jakarta.persistence.*;
 
@@ -12,6 +15,7 @@ public class Bicycle {
     
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "station_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Station station; 
     
     // Mã xe hiển thị cho người dùng (Ví dụ: ECO-001)

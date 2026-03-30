@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Wallet - Thanh Toán</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #active-bg {
+            position: absolute;
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+            border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .pkg-card { position: relative; z-index: 10; cursor: pointer; transition: transform 0.2s; }
+        
+        #toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 32px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: all 0.5s ease;
+            opacity: 0;
+            z-index: 1000;
+        }
+        #toast.show { bottom: 40px; opacity: 1; }
+        .toast-success { background: #1e293b; color: white; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-10">
+
+    <nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-green-600 font-bold text-xl">
+            <i class="fas fa-wallet"></i>
+            <span>Ecopark Wallet</span>
+        </div>
+        <div class="text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase">Số dư hiện tại</p>
+            <p id="userBalance" class="text-green-600 font-bold text-lg">50.000 P</p>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-slate-800">Chọn gói nạp điểm</h2>
+            <p class="text-gray-500 text-sm">Vui lòng chọn 1 trong 9 gói ưu đãi dưới đây.</p>
+        </div>
+
+        <div class="relative grid grid-cols-2 md:grid-cols-3 gap-4 mb-10 p-2" id="packageGrid">
+            <div id="active-bg"></div>
+            <div onclick="selectPkg(this, 10000, 10000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-coins text-gray-400 mb-2"></i>
+                <p class="font-bold">10.000 P</p><p class="text-[10px] text-gray-400">Giá: 10k</p>
+            </div>
+            <div onclick="selectPkg(this, 20000, 20000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-coins text-gray-400 mb-2"></i>
+                <p class="font-bold">20.000 P</p><p class="text-[10px] text-gray-400">Giá: 20k</p>
+            </div>
+            <div onclick="selectPkg(this, 50000, 50000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-coins text-green-500 mb-2"></i>
+                <p class="font-bold">50.000 P</p><p class="text-[10px] text-gray-400">Giá: 50k</p>
+            </div>
+            <div onclick="selectPkg(this, 105000, 100000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-gem text-blue-500 mb-2"></i>
+                <p class="font-bold">105.000 P</p><p class="text-[9px] text-blue-600 font-bold">+5% Bonus</p>
+            </div>
+            <div onclick="selectPkg(this, 220000, 200000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-gem text-blue-500 mb-2"></i>
+                <p class="font-bold">220.000 P</p><p class="text-[9px] text-blue-600 font-bold">+10% Bonus</p>
+            </div>
+            <div onclick="selectPkg(this, 550000, 500000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-crown text-yellow-500 mb-2"></i>
+                <p class="font-bold">550.000 P</p><p class="text-[9px] text-yellow-600 font-bold">+10% Bonus</p>
+            </div>
+            <div onclick="selectPkg(this, 1200000, 1000000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-crown text-yellow-500 mb-2"></i>
+                <p class="font-bold">1.2M P</p><p class="text-[9px] text-red-500 font-bold">+20% Bonus</p>
+            </div>
+            <div onclick="selectPkg(this, 2500000, 2000000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-bolt text-orange-500 mb-2"></i>
+                <p class="font-bold">2.5M P</p><p class="text-[9px] text-orange-600 font-bold">+25% Bonus</p>
+            </div>
+            <div onclick="selectPkg(this, 7000000, 5000000)" class="pkg-card p-5 rounded-2xl text-center">
+                <i class="fas fa-star text-purple-500 mb-2"></i>
+                <p class="font-bold">7M P</p><p class="text-[9px] text-purple-600 font-bold">+40% SIÊU CẤP</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[40px] p-8 shadow-xl border border-gray-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="space-y-6">
+                    <h3 class="font-bold text-lg border-l-4 border-green-500 pl-3">Xác nhận giao dịch</h3>
+                    <div class="bg-slate-50 p-5 rounded-2xl">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Thành tiền</p>
+                        <p id="confirmPrice" class="text-3xl font-black text-slate-800">10.000 VNĐ</p>
+                    </div>
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li><i class="fas fa-university w-6"></i> Vietcombank: <b>123456789</b></li>
+                        <li><i class="fas fa-user w-6"></i> Chủ TK: <b>ECOPARK BIKE</b></li>
+                        <li><i class="fas fa-tag w-6"></i> Nội dung: <b id="confirmNote" class="text-green-600">NAP 10K MINH</b></li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-col items-center justify-center border-2 border-dashed rounded-3xl p-6 bg-gray-50">
+                    <img id="qrPreview" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VCB-10K" class="w-32 h-32 mb-4 bg-white p-2 rounded-xl">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">Quét mã để thanh toán nhanh</p>
+                </div>
+            </div>
+
+            <button onclick="handlePayment()" id="btnPay" class="w-full mt-10 bg-green-500 text-white font-bold py-5 rounded-2xl shadow-lg hover:bg-green-600 active:scale-[0.98] transition-all uppercase tracking-widest flex justify-center items-center gap-3">
+                <span id="btnText">Xác nhận thanh toán</span>
+            </button>
+        </div>
+    </main>
+
+    <div id="toast">
+        <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center">
+            <i id="faIcon" class="fas"></i>
+        </div>
+        <div>
+            <p id="toastTitle" class="font-bold"></p>
+            <p id="toastDesc" class="text-xs opacity-80"></p>
+        </div>
+    </div>
+
+    <script>
+        let selectedPoints = 10000;
+        let isProcessing = false;
+
+        function selectPkg(el, points, price) {
+            const bg = document.getElementById('active-bg');
+            bg.style.width = el.offsetWidth + 'px';
+            bg.style.height = el.offsetHeight + 'px';
+            bg.style.left = el.offsetLeft + 'px';
+            bg.style.top = el.offsetTop + 'px';
+
+            selectedPoints = points;
+            document.getElementById('confirmPrice').innerText = price.toLocaleString() + ' VNĐ';
+            document.getElementById('confirmNote').innerText = `NAP ${price/1000}K MINH`;
+            document.getElementById('qrPreview').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VCB-NAP-${price}`;
+        }
+
+        function showToast(type, title, desc) {
+            const toast = document.getElementById('toast');
+            const iconBox = document.getElementById('toastIcon');
+            const faIcon = document.getElementById('faIcon');
+            
+            toast.className = `show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            iconBox.className = `w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-green-500' : 'bg-red-500 text-white'}`;
+            faIcon.className = `fas ${type === 'success' ? 'fa-check' : 'fa-exclamation-triangle'}`;
+            
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastDesc').innerText = desc;
+
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function handlePayment() {
+            if(isProcessing) return;
+            isProcessing = true;
+            
+            const btn = document.getElementById('btnPay');
+            const btnText = document.getElementById('btnText');
+            
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            btnText.innerText = "Đang kiểm tra giao dịch...";
+
+            // Giả lập logic kiểm tra chuyển tiền
+            setTimeout(() => {
+                // Xác suất 20% báo lỗi nếu bấm quá nhanh hoặc giả lập lỗi hệ thống
+                const isSuccess = Math.random() > 0.2; 
+
+                if(isSuccess) {
+                    const balanceEl = document.getElementById('userBalance');
+                    let current = parseInt(balanceEl.innerText.replace('.', '').replace(' P', ''));
+                    balanceEl.innerText = (current + selectedPoints).toLocaleString() + ' P';
+                    
+                    showToast('success', 'Thanh toán thành công!', 'Điểm đã được cộng vào ví của bạn.');
+                } else {
+                    showToast('error', 'Thanh toán thất bại!', 'Hệ thống chưa ghi nhận chuyển khoản. Vui lòng thử lại sau.');
+                }
+
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                btnText.innerText = "Xác nhận thanh toán";
+                isProcessing = false;
+            }, 1500);
+        }
+
+        window.onload = () => {
+            const first = document.querySelector('.pkg-card');
+            selectPkg(first, 10000, 10000);
+        };
+    </script>
+</body>
+</html>

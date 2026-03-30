@@ -1,6 +1,10 @@
-package com.group13.ecopark_bicycle_parking;
+package com.group13.ecopark_bicycle_parking.rental;
 
 import java.time.LocalDateTime;
+
+import com.group13.ecopark_bicycle_parking.bicycle.Bicycle;
+import com.group13.ecopark_bicycle_parking.station.Station;
+import com.group13.ecopark_bicycle_parking.user.User;
 
 import jakarta.persistence.*;
 

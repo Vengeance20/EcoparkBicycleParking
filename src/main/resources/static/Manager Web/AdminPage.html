@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Bike - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-link-active {
+            background-color: #f0fdf4;
+            color: #00a859;
+            border-radius: 1rem;
+        }
+        .menu-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .bg-pattern {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#00a859 0.4px, transparent 0.4px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen font-sans">
+
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 hidden lg:flex flex-col p-6 z-50 shadow-sm">
+        <div class="flex items-center gap-3 text-[#00a859] mb-12">
+            <div class="w-10 h-10 bg-[#00a859] rounded-xl flex items-center justify-center text-white shadow-lg shadow-green-100">
+                <i class="fas fa-bicycle"></i>
+            </div>
+            <span class="font-black text-xl tracking-tighter text-slate-800">ECOPARK</span>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-3 mb-4">Hệ thống</p>
+            <a href="#" class="flex items-center gap-3 p-3 sidebar-link-active font-bold transition-all">
+                <i class="fas fa-th-large w-5"></i> Dashboard
+            </a>
+            <a href="ModifyBikeLists.html" class="flex items-center gap-3 p-3 text-slate-500 hover:text-[#00a859] font-bold transition-all">
+                <i class="fas fa-bicycle w-5"></i> Quản lý xe
+            </a>
+            <a href="ViewBikeRental.html" class="flex items-center gap-3 p-3 text-slate-500 hover:text-[#00a859] font-bold transition-all">
+                <i class="fas fa-sync w-5"></i> Vận hành
+            </a>
+            <a href="ViewRevenueDashboard.html" class="flex items-center gap-3 p-3 text-slate-500 hover:text-[#00a859] font-bold transition-all">
+                <i class="fas fa-chart-pie w-5"></i> Doanh thu
+            </a>
+            <a href="SystemSettings.html" class="flex items-center gap-3 p-3 text-slate-500 hover:text-[#00a859] font-bold transition-all">
+                <i class="fas fa-cog w-5"></i> Cài đặt
+            </a>
+        </nav>
+
+        <div class="pt-6 border-t border-slate-100">
+            <button onclick="handleLogout()" class="flex items-center gap-3 p-4 text-red-500 font-black text-xs uppercase tracking-widest hover:bg-red-50 w-full rounded-2xl transition-all">
+                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+            </button>
+        </div>
+    </aside>
+
+    <main class="lg:ml-64 p-6 md:p-10">
+        
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800">Trang chủ Quản trị</h1>
+                <p class="text-slate-400 font-medium mt-1">Hệ thống đang hoạt động ổn định.</p>
+            </div>
+            <div class="flex items-center gap-4 bg-white p-2 pr-6 rounded-full shadow-sm border border-slate-100">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=00a859&color=fff" class="w-10 h-10 rounded-full border-2 border-green-50">
+                <div>
+                    <p class="text-xs font-black text-slate-800 uppercase">Admin Tối Cao</p>
+                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-tighter italic">Manager Online</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white p-7 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-6">
+                <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                    <i class="fas fa-bicycle"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng số xe</p>
+                    <p class="text-3xl font-black text-slate-800">1,240</p>
+                </div>
+            </div>
+            <div class="bg-white p-7 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-6">
+                <div class="w-14 h-14 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang hoạt động</p>
+                    <p class="text-3xl font-black text-slate-800">382</p>
+                </div>
+            </div>
+            <div class="bg-white p-7 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-6">
+                <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bảo trì</p>
+                    <p class="text-3xl font-black text-slate-800">12</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 px-2">Lối tắt chức năng</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div onclick="window.location.href='ModifyBikeLists.html'" class="menu-card bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 cursor-pointer">
+                <div class="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-100">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 mb-2">Thêm & Sửa Xe</h3>
+                <p class="text-xs text-slate-400 leading-relaxed font-medium">Cập nhật danh sách xe và các trạm dừng mới.</p>
+            </div>
+
+            <div onclick="window.location.href='ViewBikeRental.html'" class="menu-card bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 cursor-pointer">
+                <div class="w-12 h-12 bg-[#00a859] text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-green-100">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 mb-2">Trạng thái thuê</h3>
+                <p class="text-xs text-slate-400 leading-relaxed font-medium">Kiểm soát khách hàng đang sử dụng dịch vụ.</p>
+            </div>
+
+            <div onclick="window.location.href='ViewRevenueDashboard.html'" class="menu-card bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 cursor-pointer">
+                <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-amber-100">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 mb-2">Báo cáo tiền</h3>
+                <p class="text-xs text-slate-400 leading-relaxed font-medium">Thống kê doanh thu theo ngày, tuần, tháng.</p>
+            </div>
+
+            <div onclick="window.location.href='SystemSettings.html'" class="menu-card bg-slate-900 p-8 rounded-[40px] shadow-xl cursor-pointer hover:bg-[#00a859]">
+                <div class="w-12 h-12 bg-white/10 text-white rounded-2xl flex items-center justify-center mb-6 border border-white/20">
+                    <i class="fas fa-sliders-h"></i>
+                </div>
+                <h3 class="font-bold text-white mb-2">Cài đặt hệ thống</h3>
+                <p class="text-xs text-white/50 leading-relaxed font-medium">Thiết lập giá cước và cấu hình vận hành.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function handleLogout() {
+            if(confirm("Xác nhận đăng xuất hệ thống Admin?")) {
+                window.location.href = 'AdminManagerRegister.html';
+            }
+        }
+
+    </script>
+</body>
+</html>
