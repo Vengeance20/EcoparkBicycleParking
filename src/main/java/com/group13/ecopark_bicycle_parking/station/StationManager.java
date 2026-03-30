@@ -1,4 +1,6 @@
-package com.group13.ecopark_bicycle_parking;
+package com.group13.ecopark_bicycle_parking.station;
+
+import com.group13.ecopark_bicycle_parking.user.User;
 
 import jakarta.persistence.*;
 
