@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Bike - User Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .bg-dot-pattern {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#00a859 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+        .feature-card {
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            background: white;
+            border: 1px solid #f1f5f9;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -12px rgba(0, 168, 89, 0.15);
+            border-color: #00a859;
+        }
+        /* Hiệu ứng cho Modal Troll */
+        #trollModal {
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        .troll-content {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-dot-pattern min-h-screen overflow-x-hidden">
+
+    <div id="trollModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60">
+        <div class="troll-content bg-white p-8 rounded-[40px] max-w-sm w-full text-center shadow-2xl">
+            <img src="https://i.imgflip.com/4/39t1o.jpg" alt="Troll Face" class="w-full rounded-2xl mb-6 mx-auto">
+            <h2 class="text-3xl font-black text-red-600 mb-2 italic">BỊ LỪA RỒI!</h2>
+            <p class="text-slate-600 font-bold mb-6">Trang này là của ADMIN cơ mà, định hack à? 🤡</p>
+            <button onclick="closeTroll()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black hover:bg-red-600 transition-colors">
+                LO MÀ ĐI THUÊ XE ĐI!
+            </button>
+        </div>
+    </div>
+
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 border-b border-slate-100">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#00a859] rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-bicycle"></i>
+                </div>
+                <h1 class="font-black text-xl tracking-tighter text-slate-800">ECOPARK BIKE</h1>
+            </div>
+            <button onclick="handleLogout()" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
+                <i class="fas fa-power-off"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <header class="mb-12">
+            <h2 class="text-4xl font-black text-slate-900 tracking-tight">Trung tâm Điều khiển</h2>
+            <p class="text-slate-500 font-medium mt-2">Chọn dịch vụ bạn muốn sử dụng.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <div onclick="window.location.href='ViewLocationMapPage.html'" class="feature-card p-8 rounded-[40px] cursor-pointer group">
+                <div class="w-16 h-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center text-2xl mb-8 group-hover:bg-red-500 group-hover:text-white transition-all">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Bản đồ Trạm xe</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Tìm xe gần nhất quanh bạn.</p>
+            </div>
+
+            <div onclick="showTroll()" class="feature-card p-8 rounded-[40px] cursor-pointer group border-2 border-dashed border-red-200">
+                <div class="w-16 h-16 bg-slate-900 text-white rounded-3xl flex items-center justify-center text-2xl mb-8">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Chỉnh sửa Danh sách</h3>
+                <p class="text-sm text-slate-400 leading-relaxed font-bold text-red-400">DÀNH RIÊNG CHO ADMIN</p>
+            </div>
+
+            <div onclick="showTroll()" class="feature-card p-8 rounded-[40px] cursor-pointer group border-2 border-dashed border-red-200">
+                <div class="w-16 h-16 bg-green-50 text-[#00a859] rounded-3xl flex items-center justify-center text-2xl mb-8">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Báo cáo Doanh thu</h3>
+                <p class="text-sm text-slate-400 leading-relaxed font-bold text-red-400">DÀNH RIÊNG CHO ADMIN</p>
+            </div>
+
+            <div onclick="window.location.href='ViewBicycleListInformation.html'" class="feature-card p-8 rounded-[40px] cursor-pointer group">
+                <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center text-2xl mb-8 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Thông tin Xe</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Xem tình trạng pin và mã xe.</p>
+            </div>
+
+            <div onclick="window.location.href='BuyVirtualPoints.html'" class="feature-card p-8 rounded-[40px] cursor-pointer group">
+                <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-3xl flex items-center justify-center text-2xl mb-8 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Ví & Điểm</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Nạp tiền vào tài khoản.</p>
+            </div>
+
+            <div onclick="window.location.href='ChangeInformation.html'" class="feature-card p-8 rounded-[40px] cursor-pointer group">
+                <div class="w-16 h-16 bg-purple-50 text-purple-500 rounded-3xl flex items-center justify-center text-2xl mb-8 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Cá nhân</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Đổi mật khẩu, thông tin.</p>
+            </div>
+
+        </div>
+
+        <footer class="mt-20 pt-8 border-t border-slate-200 flex justify-center italic">
+            <p class="text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">© 2026 Ecopark Smart Mobility</p>
+        </footer>
+    </main>
+
+    <script>
+        function showTroll() {
+            document.getElementById('trollModal').style.display = 'flex';
+        }
+
+        function closeTroll() {
+            document.getElementById('trollModal').style.display = 'none';
+        }
+
+        function handleLogout() {
+            if(confirm("Xác nhận đăng xuất?")) {
+                window.location.href = 'RegisterLoginPage.html';
+            }
+        }
+    </script>
+</body>
+</html>
