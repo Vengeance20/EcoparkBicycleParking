@@ -38,9 +38,18 @@ public class BicycleController {
 
     // 3. THÊM MỚI
     @PostMapping
-    public ResponseEntity<Bicycle> themXeMoi(@Valid @RequestBody Bicycle xeMoi) {
-        Bicycle xeDaLuu = bicycleService.themXeMoi(xeMoi);
-        return new ResponseEntity<>(xeDaLuu, HttpStatus.CREATED); 
+    public ResponseEntity<Bicycle> themXeMoi(
+            @Valid @RequestBody Bicycle xeMoi, 
+            @RequestParam Long managerId) { // Yêu cầu phải có ?managerId=...
+        
+        try {
+            // Ném cả cục JSON và cái ID cho Bếp xử lý
+            Bicycle xeDaLuu = bicycleService.themXeChoManager(xeMoi, managerId);
+            return new ResponseEntity<>(xeDaLuu, HttpStatus.CREATED); 
+        } catch (RuntimeException e) {
+            // Nếu Bếp báo lỗi (không tìm thấy quản lý, quản lý chưa có bãi...), trả về mã 400 và câu chửi của Bếp
+            return ResponseEntity.badRequest().build(); 
+        }
     }
 
     // 4. CẬP NHẬT
