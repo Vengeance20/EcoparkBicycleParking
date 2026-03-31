@@ -2,6 +2,10 @@ package com.group13.ecopark_bicycle_parking.bicycle;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.group13.ecopark_bicycle_parking.station.StationManager;
+import com.group13.ecopark_bicycle_parking.station.StationManagerRepository;
+import com.group13.ecopark_bicycle_parking.user.User;
+import com.group13.ecopark_bicycle_parking.user.UserRepository;
 
 import java.util.List;
 
@@ -9,12 +13,18 @@ import java.util.List;
 public class BicycleService {
 
     // Không dùng @Autowired nữa, đây là cách tiêm (inject) chuẩn nhất hiện nay
-    private final BicycleRepository bicycleRepository;
+	private final BicycleRepository bicycleRepository;
+    private final UserRepository userRepository; // Thêm kho User
+    private final StationManagerRepository stationManagerRepository; // Thêm kho Phân công
 
-    public BicycleService(BicycleRepository bicycleRepository) {
+    // Cập nhật Constructor để tiêm đủ 3 kho
+    public BicycleService(BicycleRepository bicycleRepository, 
+                          UserRepository userRepository, 
+                          StationManagerRepository stationManagerRepository) {
         this.bicycleRepository = bicycleRepository;
+        this.userRepository = userRepository;
+        this.stationManagerRepository = stationManagerRepository;
     }
-
     // 1. Lấy danh sách
     public List<Bicycle> layDanhSachXe() {
         return bicycleRepository.findAll();
@@ -27,8 +37,20 @@ public class BicycleService {
     }
 
     // 3. Thêm xe mới
-    @Transactional // Bảo vệ an toàn dữ liệu khi lưu
-    public Bicycle themXeMoi(Bicycle xeMoi) {
+    @Transactional
+    public Bicycle themXeChoManager(Bicycle xeMoi, Long managerId) {
+        // 1. Kiểm tra xem ông quản lý này có tồn tại không
+        User manager = userRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Quản lý với ID: " + managerId));
+
+        // 2. Tìm xem ông này được giao quản lý bãi nào
+        StationManager assignment = stationManagerRepository.findByUser_UserId(manager.getUserId())
+                .orElseThrow(() -> new RuntimeException("Quản lý này chưa được phân công bãi xe nào!"));
+
+        // 3. Ép chiếc xe mới vào đúng cái bãi đó
+        xeMoi.setStation(assignment.getStation());
+
+        // 4. Lưu vào Database
         return bicycleRepository.save(xeMoi);
     }
 
