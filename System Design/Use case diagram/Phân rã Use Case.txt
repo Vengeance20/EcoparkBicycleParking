@@ -1,6 +1,6 @@
 Vì luật trừ điểm (BR1, BR5) cực kỳ khắt khe (chậm 1 phút cũng trừ 30 điểm), chúng ta phải phân rã thật kỹ để lúc làm UI/UX nhớ thiết kế các thông báo cảnh báo cho khách hàng:
 
-1. Phân rã Use Case: Thuê Xe (UC1.5)
+1. Phân rã Use Case: Thuê Xe (U5)
 
 <<include>> Xác thực trạng thái xe: Xe phải đang AVAILABLE.
 
@@ -14,7 +14,7 @@ Vì luật trừ điểm (BR1, BR5) cực kỳ khắt khe (chậm 1 phút cũng 
 
 <<extend>> Áp dụng ưu đãi: (Xảy ra nếu là Cư dân). Chỉ trừ 60% số Điểm của gói thuê. Cọc 50 Điểm vẫn giữ nguyên.
 
-2. Phân rã Use Case: Trả Xe (UC1.6)
+2. Phân rã Use Case: Trả Xe (U6)
 
 <<include>> Chốt thời gian: Tính tổng số phút từ lúc thuê đến lúc trả.
 
