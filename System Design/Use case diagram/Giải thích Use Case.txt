@@ -2,13 +2,13 @@ Giải thích Use Case
 Nhóm 1: Khách hàng (User)
 Thay đổi lớn nhất nằm ở quản lý dòng Điểm.
 
-U1 - Quản lý tài khoản: Đăng ký, đăng nhập, cập nhật CCCD và xác thực Thẻ cư dân Ecopark.
+U1 - Quản lý tài khoản: Đăng ký, đăng nhập, cập nhật thông tin và xác thực Thẻ cư dân Ecopark.
 
 U2 - Mua điểm (Top-up): Nạp tiền thật (VNĐ) vào hệ thống để quy đổi thành Điểm (Tỉ lệ 1:1000).
 
 U3 - Đổi điểm / Rút tiền (Withdraw): Yêu cầu đổi Điểm dư thừa trong ví thành tiền thật.
 
-U4 - Tìm kiếm bãi & Xe: Xem bản đồ, tìm bãi đỗ, xem số lượng xe AVAILABLE.
+U4 - Tìm kiếm bãi & Xe: Xem bản đồ, tìm bãi đỗ, xem số lượng xe.
 
 U5 - Thuê xe: Chọn gói giờ và mượn xe (Thanh toán bằng Điểm).
 
@@ -30,6 +30,6 @@ M3 - Xem thống kê: Báo cáo lượt thuê của riêng trạm được phân
 
 A1 - Quản lý Điểm tập kết: Thêm, sửa, xóa bãi đỗ.
 
-A2 - Quản lý Người dùng: Cấp tài khoản quản lý, khóa tài khoản vi phạm.
+A2 - Quản lý Người dùng: Cấp tài khoản quản lý và cấp trạm cho quản lý, khóa tài khoản vi phạm.
 
 A3 - Xem Thống kê: Báo cáo lượt thuê và thống kê dòng Điểm nạp/rút/tiêu dùng của toàn hệ thống.
