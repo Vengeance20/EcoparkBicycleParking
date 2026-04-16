@@ -1,0 +1,35 @@
+Giải thích Use Case
+Nhóm 1: Khách hàng (User)
+Thay đổi lớn nhất nằm ở quản lý dòng Điểm.
+
+U1 - Quản lý tài khoản: Đăng ký, đăng nhập, cập nhật CCCD và xác thực Thẻ cư dân Ecopark.
+
+U2 - Mua điểm (Top-up): Nạp tiền thật (VNĐ) vào hệ thống để quy đổi thành Điểm (Tỉ lệ 1:1000).
+
+U3 - Đổi điểm / Rút tiền (Withdraw): Yêu cầu đổi Điểm dư thừa trong ví thành tiền thật.
+
+U4 - Tìm kiếm bãi & Xe: Xem bản đồ, tìm bãi đỗ, xem số lượng xe AVAILABLE.
+
+U5 - Thuê xe: Chọn gói giờ và mượn xe (Thanh toán bằng Điểm).
+
+U6 - Trả xe: Kết thúc chuyến đi (Tính phạt trễ giờ bằng Điểm, hoàn Điểm cọc).
+
+U7 - Xem lịch sử: Xem lịch sử chuyến đi và lịch sử biến động Điểm (Point Transactions).
+
+👷 Nhóm 2: Quản lý bãi xe (Station Manager)
+Dựa theo FR3.2, quyền hạn của quản lý được gom gọn lại.
+
+M1 - Giám sát bãi xe: Xem danh sách toàn bộ xe thuộc bãi quản lý.
+
+M2 - Quản lý đầu xe: Thêm xe mới, Xóa xe, và Cập nhật trạng thái xe (Ví dụ: Chuyển sang MAINTENANCE khi xe hỏng). (Gom chung các chức năng thêm/bớt/xóa vào một cụm quản lý).
+
+M3 - Xem thống kê: Báo cáo lượt thuê của riêng trạm được phân công cho quản lý
+
+👑 Nhóm 3: Quản trị viên (Admin)
+(Giữ nguyên, chỉ thay đổi khái niệm doanh thu từ Tiền sang Điểm).
+
+A1 - Quản lý Điểm tập kết: Thêm, sửa, xóa bãi đỗ.
+
+A2 - Quản lý Người dùng: Cấp tài khoản quản lý, khóa tài khoản vi phạm.
+
+A3 - Xem Thống kê: Báo cáo lượt thuê và thống kê dòng Điểm nạp/rút/tiêu dùng của toàn hệ thống.
