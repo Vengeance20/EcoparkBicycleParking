@@ -23,8 +23,6 @@ M1 - Giám sát bãi xe: Xem danh sách toàn bộ xe thuộc bãi quản lý.
 
 M2 - Quản lý đầu xe: Thêm xe mới, Xóa xe, và Cập nhật trạng thái xe (Ví dụ: Chuyển sang MAINTENANCE khi xe hỏng). (Gom chung các chức năng thêm/bớt/xóa vào một cụm quản lý).
 
-M3 - Xem thống kê: Báo cáo lượt thuê của riêng trạm được phân công cho quản lý
-
 👑 Nhóm 3: Quản trị viên (Admin)
 (Giữ nguyên, chỉ thay đổi khái niệm doanh thu từ Tiền sang Điểm).
 
