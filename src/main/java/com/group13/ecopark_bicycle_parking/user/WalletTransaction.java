@@ -1,65 +1,33 @@
 package com.group13.ecopark_bicycle_parking.user;
 
-import java.time.LocalDateTime;
-
+import com.group13.ecopark_bicycle_parking.rental.Rental;
 import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "wallet_transactions")
-//Dành cho dữ liệu thanh đoán mua điểm
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class WalletTransaction {
-    @Id 
-    @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Long transaction_id;
-    
-    @ManyToOne(fetch = FetchType.LAZY) 
-    @JoinColumn(name = "user_id")
-    private User user; 
-    
-    private Double amount; //Số tiền dương nếu là nạp, âm là hoàn tiền
-    
-    private String transaction_type; //Trạng thái: "Chuyển khoản, Tiền mặt, Hoàn tiền"
-    
-    private LocalDateTime created_at;
 
-	public Long getTransaction_id() {
-		return transaction_id;
-	}
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer transactionId;
 
-	public void setTransaction_id(Long transaction_id) {
-		this.transaction_id = transaction_id;
-	}
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
 
-	public User getUser() {
-		return user;
-	}
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "rental_id")
+	private Rental rental;
 
-	public void setUser(User user) {
-		this.user = user;
-	}
+	private String transactionType;
 
-	public Double getAmount() {
-		return amount;
-	}
-	
-	public void setAmount(Double amount) {
-		this.amount = amount;
-	}
+	@Column(nullable = false, precision = 10, scale = 2)
+	private BigDecimal amount;
 
-	public String getTransaction_type() {
-		return transaction_type;
-	}
-
-	public void setTransaction_type(String transaction_type) {
-		this.transaction_type = transaction_type;
-	}
-
-	public LocalDateTime getCreated_at() {
-		return created_at;
-	}
-
-	public void setCreated_at(LocalDateTime created_at) {
-		this.created_at = created_at;
-	}
-    
+	@Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private LocalDateTime createdAt;
 }

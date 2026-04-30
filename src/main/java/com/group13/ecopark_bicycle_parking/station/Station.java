@@ -1,73 +1,36 @@
 package com.group13.ecopark_bicycle_parking.station;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import java.math.BigDecimal;
 
-@Entity // Báo cho Spring Boot biết: "Hãy biến class này thành 1 Bảng trong MySQL"
-@Table(name = "stations") // Đặt tên cho bảng trong CSDL là 'bicycles'
+@Entity
+@Table(name = "stations")
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@SQLDelete(sql = "UPDATE stations SET is_deleted = true WHERE station_id=?")
+@Where(clause = "is_deleted = false")
 public class Station {
-	
-    @Id 
-    @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Long station_id;
-    
-    @Column(nullable = false)
-    private String name;
-    
-    private Double latitude;
-    
-    private Double longitude;
-    
-    private Long capacity;
-    
-    @Column(nullable = false)
-    private String status; // Trạng thái: "Mở cửa", "Đóng cửa"
 
-	public Long getId() {
-		return station_id;
-	}
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer stationId;
 
-	public void setId(Long station_id) {
-		this.station_id = station_id;
-	}
+	@Column(unique = true, nullable = false)
+	private String name;
 
-	public String getName() {
-		return name;
-	}
+	@Column(nullable = false, precision = 10, scale = 8)
+	private BigDecimal latitude;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+	@Column(nullable = false, precision = 11, scale = 8)
+	private BigDecimal longitude;
 
-	public Double getLatitude() {
-		return latitude;
-	}
+	@Column(nullable = false)
+	private Integer capacity;
 
-	public void setLatitude(Double latitude) {
-		this.latitude = latitude;
-	}
+	private String status;
 
-	public Double getLongitude() {
-		return longitude;
-	}
-
-	public void setLongitude(Double longitude) {
-		this.longitude = longitude;
-	}
-
-	public Long getCapacity() {
-		return capacity;
-	}
-
-	public void setCapacity(Long capacity) {
-		this.capacity = capacity;
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-    
+	@Column(nullable = false)
+	private boolean isDeleted = false;
 }
