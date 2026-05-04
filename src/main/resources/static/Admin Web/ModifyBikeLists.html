@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Ecopark Manager - Chuẩn Backend 100%</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .modal { display: none; }
+        .modal.active { display: flex; }
+    </style>
+</head>
+<body class="bg-slate-100 p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-3xl shadow-sm">
+            <div>
+                <h1 class="text-2xl font-black uppercase text-slate-800">Trạm: <span id="labelStation" class="text-green-600">Rừng Cọ</span></h1>
+                <div id="statusBadge" class="mt-2 text-xs font-bold px-3 py-1 rounded-full bg-gray-200 inline-block">Đang tải DB...</div>
+            </div>
+            <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 transition-all">
+                <i class="fas fa-plus"></i> Thêm xe mới
+            </button>
+        </div>
+
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button onclick="changeStation(this, 1, 'Rừng Cọ')" class="station-btn px-6 py-2 rounded-xl font-bold bg-slate-800 text-white shadow-md">Rừng Cọ (ID:1)</button>
+            <button onclick="changeStation(this, 2, 'West Bay')" class="station-btn px-6 py-2 rounded-xl font-bold bg-white text-slate-500 hover:bg-slate-50">West Bay (ID:2)</button>
+            <button onclick="changeStation(this, 3, 'Aquabay')" class="station-btn px-6 py-2 rounded-xl font-bold bg-white text-slate-500 hover:bg-slate-50">Aquabay (ID:3)</button>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b">
+                    <tr>
+                        <th class="px-8 py-4">Mã số (bikeCode)</th>
+                        <th class="px-8 py-4">Loại (bikeType)</th>
+                        <th class="px-8 py-4">Trạng thái (status)</th>
+                        <th class="px-8 py-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="bikeTableBody">
+                    <tr><td colspan="4" class="text-center py-20 text-slate-400 font-bold">Đang tải dữ liệu từ MySQL...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="bikeModal" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center">
+        <div class="bg-white w-full max-w-md p-8 rounded-[40px] shadow-2xl">
+            <h2 id="modalTitle" class="text-2xl font-black mb-6">Thêm xe mới</h2>
+            <input type="hidden" id="editId">
+            
+            <div class="space-y-4">
+                <input type="text" id="inputCode" placeholder="Mã xe (VD: ECO-100)" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500">
+                <select id="inputType" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none">
+                    <option value="SINGLE">Xe đạp đơn (SINGLE)</option>
+                    <option value="DOUBLE">Xe đạp đôi (DOUBLE)</option>
+                </select>
+                <select id="inputStatus" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none">
+                    <option value="AVAILABLE">Sẵn sàng (AVAILABLE)</option>
+                    <option value="IN_USE">Đang sử dụng (IN_USE)</option>
+                    <option value="MAINTENANCE">Bảo trì (MAINTENANCE)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Hủy</button>
+                <button onclick="handleSave()" class="flex-1 py-4 bg-green-600 text-white rounded-2xl font-bold shadow-lg hover:bg-green-700 transition-colors">LƯU DATABASE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1/bicycles';
+        let allBikes = [];
+        let currentStationId = 1;
+
+        // 1. TẢI DỮ LIỆU TỪ SPRING BOOT
+        async function loadData() {
+            const badge = document.getElementById('statusBadge');
+            try {
+                const res = await fetch(API_BASE);
+                if (!res.ok) throw new Error("Server trả lỗi");
+                allBikes = await res.json();
+                
+                badge.innerText = "● ĐÃ KẾT NỐI DATABASE";
+                badge.className = "mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-green-100 text-green-600 inline-block";
+                renderTable();
+            } catch (err) {
+                badge.innerText = "● LỖI KẾT NỐI BACKEND";
+                badge.className = "mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-red-100 text-red-600 inline-block";
+            }
+        }
+
+        // 2. VẼ BẢNG
+        function renderTable() {
+            const tbody = document.getElementById('bikeTableBody');
+            
+            const filtered = allBikes.filter(b => {
+                const sId = b.station?.station_id || b.station?.id;
+                return sId == currentStationId;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-slate-400 font-bold italic">Không có xe nào ở trạm này. Hãy thêm mới!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(b => {
+                const realId = b.bike_id || b.id; 
+                // Xử lý thông minh: lấy bikeCode hoặc bike_code tùy chuẩn Java
+                const code = b.bikeCode || b.bike_code || 'N/A';
+                const type = b.bikeType || b.bike_type || 'N/A';
+                
+                return `
+                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td class="px-8 py-5 font-bold text-slate-700">${code}</td>
+                    <td class="px-8 py-5 text-xs font-bold text-slate-500">${type}</td>
+                    <td class="px-8 py-5 text-xs font-bold ${b.status === 'AVAILABLE' ? 'text-green-500' : 'text-amber-500'}">${b.status}</td>
+                    <td class="px-8 py-5 text-right">
+                        <button onclick="openModal('edit', ${realId})" class="text-blue-400 hover:text-blue-600 p-2 transition-colors"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteBike(${realId})" class="text-red-300 hover:text-red-500 p-2 transition-colors"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        // 3. LƯU (THÊM / SỬA) VÀO DATABASE
+        async function handleSave() {
+            const id = document.getElementById('editId').value;
+            
+            // Lấy giá trị từ Form
+            const codeValue = document.getElementById('inputCode').value;
+            const typeValue = document.getElementById('inputType').value;
+            const statusValue = document.getElementById('inputStatus').value;
+
+            // CHIÊU BÀI QUAN TRỌNG: Gửi cả 2 kiểu tên biến để lách luật Jackson của Spring Boot
+            const data = {
+                bikeCode: codeValue,
+                bike_code: codeValue,
+                bikeType: typeValue,
+                bike_type: typeValue,
+                status: statusValue
+            };
+
+            try {
+                let url = API_BASE;
+                let method = 'POST';
+
+                if (id) {
+                    // Update xe (Cần ID)
+                    url = `${API_BASE}/${id}`;
+                    method = 'PUT';
+                } else {
+                    // Tạo xe mới (Yêu cầu phải có managerId=1 theo Backend của bác)
+                    url = `${API_BASE}?managerId=1`;
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadData(); // Tải lại bảng ngay lập tức để thấy xe mới
+                    alert("Đã lưu vào Database thành công!");
+                } else {
+                    alert("Lưu thất bại! Hãy check lại xem User ID=1 có trong DB không.");
+                }
+            } catch (err) {
+                console.error("Lỗi:", err);
+            }
+        }
+
+        // 4. XÓA XE
+        async function deleteBike(id) {
+            if (!confirm("Bạn có chắc chắn muốn xóa xe này khỏi Database?")) return;
+            try {
+                const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadData();
+                } else {
+                    alert("Xóa thất bại!");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // 5. CHUYỂN TRẠM
+        function changeStation(btn, id, name) {
+            currentStationId = id;
+            document.getElementById('labelStation').innerText = name;
+            document.querySelectorAll('.station-btn').forEach(b => {
+                b.className = "station-btn px-6 py-2 rounded-xl font-bold bg-white text-slate-500 hover:bg-slate-50";
+            });
+            btn.className = "station-btn px-6 py-2 rounded-xl font-bold bg-slate-800 text-white shadow-md";
+            renderTable();
+        }
+
+        // 6. ĐÓNG MỞ FORM
+        function openModal(mode, id = null) {
+            document.getElementById('bikeModal').classList.add('active');
+            if (mode === 'edit') {
+                const b = allBikes.find(x => x.bike_id == id || x.id == id);
+                document.getElementById('modalTitle').innerText = "Cập nhật xe";
+                document.getElementById('editId').value = id;
+                document.getElementById('inputCode').value = b.bikeCode || b.bike_code || "";
+                document.getElementById('inputType').value = b.bikeType || b.bike_type || "SINGLE";
+                document.getElementById('inputStatus').value = b.status || "AVAILABLE";
+            } else {
+                document.getElementById('modalTitle').innerText = "Thêm xe mới";
+                document.getElementById('editId').value = "";
+                document.getElementById('inputCode').value = "";
+                document.getElementById('inputStatus').value = "AVAILABLE";
+            }
+        }
+
+        function closeModal() { document.getElementById('bikeModal').classList.remove('active'); }
+
+        // Khởi động
+        window.onload = loadData;
+    </script>
+</body>
+</html>
