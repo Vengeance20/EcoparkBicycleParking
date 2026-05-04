@@ -1,0 +1,30 @@
+Vì luật trừ điểm (BR1, BR5) cực kỳ khắt khe (chậm 1 phút cũng trừ 30 điểm), chúng ta phải phân rã thật kỹ để lúc làm UI/UX nhớ thiết kế các thông báo cảnh báo cho khách hàng:
+
+1. Phân rã Use Case: Thuê Xe (U5)
+
+<<include>> Xác thực trạng thái xe: Xe phải đang AVAILABLE.
+
+<<include>> Kiểm tra số dư Điểm: Ví phải có >= (50 Điểm cọc + Điểm gói thuê).
+
+<<include>> Trừ Điểm: Trừ tổng Điểm (Cọc + Thuê) vào wallet_balance.
+
+<<include>> Cập nhật hệ thống: Đổi trạng thái xe thành IN_USE.
+
+<<extend>> Cảnh báo & Yêu cầu Mua điểm: (Xảy ra nếu số dư Điểm không đủ). Giao diện sẽ hiện Popup "Bạn cần mua thêm Điểm".
+
+<<extend>> Áp dụng ưu đãi: (Xảy ra nếu là Cư dân). Chỉ trừ 60% số Điểm của gói thuê. Cọc 50 Điểm vẫn giữ nguyên.
+
+2. Phân rã Use Case: Trả Xe (U6)
+
+<<include>> Chốt thời gian: Tính tổng số phút từ lúc thuê đến lúc trả.
+
+<<include>> Đổi trạng thái: Cập nhật xe về AVAILABLE và gán vào bãi đích.
+
+<<include>> Xuất hóa đơn: Hiển thị tổng kết chuyến đi trên màn hình.
+
+<<extend>> Thu phạt trễ giờ: (Xảy ra nếu mượn lố giờ gói đã chọn). Cứ mỗi block <= 30 phút lố, trừ 30 Điểm. Hệ thống sẽ cấn trừ thẳng Điểm phạt này vào 50 Điểm cọc.
+
+<<extend>> Hoàn cọc: (Xảy ra sau khi đã xử lý phạt). Hoàn lại số Điểm cọc còn lại (sau khi trừ phạt) về ví người dùng.
+
+Ví dụ kinh điển lúc bảo vệ đồ án: Khách mua gói 1h (Cọc 50 điểm). Khách đi lố 35 phút (Bị phạt 2 block = 60 điểm).
+-> Lúc trả xe: Khách bị mất sạch 50 điểm cọc, và ví bị âm (-10 điểm). Đội code Backend của bạn phải xử lý được "ca khó" này (hoặc ép ví không được âm mà bắt khách mua thêm điểm để trả nợ).
