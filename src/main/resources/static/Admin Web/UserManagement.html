@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý nhân sự - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-custom { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+        .nav-link { transition: all 0.3s ease; border-radius: 12px; margin: 4px 0; }
+        .nav-link:hover { background: #f0fdf4; color: #00a859 !important; transform: translateX(5px); }
+        .nav-link.active { background: #00a859; color: white !important; box-shadow: 0 10px 15px -3px rgba(0, 168, 89, 0.2); }
+        
+        #addManagerModal { transition: all 0.3s ease; }
+        .modal-content { transform: scale(0.9); transition: all 0.3s ease; }
+        #addManagerModal.active .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <aside class="fixed left-0 top-0 h-full w-72 sidebar-custom border-r border-slate-200 hidden lg:flex flex-col p-8 z-50">
+        <div class="flex items-center gap-4 mb-12 px-2">
+            <div class="w-10 h-10 bg-[#00a859] rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="fas fa-leaf text-lg"></i>
+            </div>
+            <span class="font-black text-2xl tracking-tight text-[#00a859]">ECOPARK</span>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="AdminPage.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="UserManagement.html" class="nav-link active flex items-center gap-4 p-4 text-white font-bold">
+                <i class="fas fa-user-shield w-5 text-center"></i> Quản lý User/Mgr
+            </a>
+            <a href="StationManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+                <i class="fas fa-charging-station w-5 text-center"></i> Quản lý Trạm
+            </a>
+            <a href="ModifyBikeLists.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+                <i class="fas fa-bicycle w-5 text-center"></i> Quản lý Xe
+            </a>
+        </nav>
+    </aside>
+
+    <main class="lg:ml-72 p-6 md:p-12">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Quản lý Tài khoản</h1>
+                <p class="text-slate-500 text-sm font-medium">Manager (Admin tạo) & User (Hệ thống tự ghi nhận)</p>
+            </div>
+            <button onclick="toggleModal(true)" class="bg-[#00a859] text-white px-6 py-3 rounded-2xl font-black flex items-center gap-3 shadow-lg shadow-green-100 hover:transform hover:-translate-y-1 transition-all">
+                <i class="fas fa-user-plus"></i> Cấp quyền Manager
+            </button>
+        </div>
+
+        <div class="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Họ tên</th>
+                        <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Vai trò</th>
+                        <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
+                        <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <tr>
+                        <td class="p-6">
+                            <p class="font-bold text-slate-800">Nguyễn Văn A</p>
+                            <p class="text-xs text-slate-400 font-medium">nguyenvana@ecopark.com</p>
+                        </td>
+                        <td class="p-6">
+                            <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-lg border border-blue-100">Manager</span>
+                        </td>
+                        <td class="p-6 text-center">
+                            <span class="inline-flex items-center gap-2 text-green-500 font-bold text-sm">
+                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online
+                            </span>
+                        </td>
+                        <td class="p-6 text-right">
+                            <button class="text-slate-400 hover:text-blue-500 mx-2 transition-colors font-bold text-sm">Sửa</button>
+                            <button class="text-slate-400 hover:text-red-500 mx-2 transition-colors font-bold text-sm">Xóa</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-6">
+                            <p class="font-bold text-slate-800">Trần Thị B (User tự tạo)</p>
+                            <p class="text-xs text-slate-400 font-medium">tranthib@gmail.com</p>
+                        </td>
+                        <td class="p-6">
+                            <span class="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black uppercase rounded-lg">User</span>
+                        </td>
+                        <td class="p-6 text-center text-slate-400 font-bold text-sm">Offline</td>
+                        <td class="p-6 text-right">
+                            <button class="text-slate-300 cursor-not-allowed mx-2 font-bold text-sm">Khóa</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="addManagerModal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 relative">
+            <button onclick="toggleModal(false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800">Cấp quyền Quản lý</h2>
+                <p class="text-sm text-slate-400 font-medium">Manager có quyền xem báo cáo và điều phối xe.</p>
+            </div>
+
+            <form class="space-y-5">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Tên Manager</label>
+                    <input type="text" placeholder="Nhập họ và tên..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Email đăng nhập</label>
+                    <input type="email" placeholder="example@ecopark.com" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Mật khẩu tạm thời</label>
+                    <input type="password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="toggleModal(false)" class="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Hủy</button>
+                    <button type="submit" class="flex-1 px-6 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">Tạo Manager</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(show) {
+            const modal = document.getElementById('addManagerModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => modal.classList.add('active'), 10);
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>

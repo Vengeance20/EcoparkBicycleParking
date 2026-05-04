@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Bike - Quản lý Trạm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-custom { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+        .nav-link { transition: all 0.3s ease; border-radius: 12px; margin: 4px 0; }
+        .nav-link:hover { background: #f0fdf4; color: #00a859 !important; transform: translateX(5px); }
+        .nav-link.active { background: #00a859; color: white !important; box-shadow: 0 10px 15px -3px rgba(0, 168, 89, 0.2); }
+        .bg-pattern { background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px); background-size: 24px 24px; }
+        
+        /* Hiệu ứng mượt cho Modal */
+        #addStationModal { transition: opacity 0.3s ease; }
+        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; }
+        #addStationModal.active .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen font-sans">
+
+    <aside class="fixed left-0 top-0 h-full w-72 sidebar-custom border-r border-slate-200 hidden lg:flex flex-col p-8 z-50">
+        <div class="flex items-center gap-4 mb-12 px-2">
+            <div class="w-12 h-12 bg-[#00a859] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-200">
+                <i class="fas fa-leaf text-xl"></i>
+            </div>
+            <div>
+                <span class="font-black text-2xl tracking-tight text-slate-800 block">ECOPARK</span>
+                <span class="text-[10px] font-bold text-green-600 uppercase tracking-[0.2em]">Bike System</span>
+            </div>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="AdminPage.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+            </a>
+            <a href="UserManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+                <i class="fas fa-user-gear w-5 text-center"></i> Quản lý User
+            </a>
+            <a href="StationManagement.html" class="nav-link active flex items-center gap-4 p-4 text-white font-bold">
+                <i class="fas fa-charging-station w-5 text-center"></i> Quản lý Trạm
+            </a>
+            <a href="ModifyBikeLists.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+                <i class="fas fa-bicycle w-5 text-center"></i> Quản lý Xe
+            </a>
+        </nav>
+    </aside>
+
+    <main class="lg:ml-72 p-6 md:p-12">
+        <header class="mb-12">
+            <h1 class="text-4xl font-black text-slate-800 tracking-tight">Danh sách trạm dừng</h1>
+            <p class="text-slate-500 font-medium mt-2">Cấu hình vị trí và sức chứa của các bãi đỗ xe.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex justify-between items-center group hover:shadow-md transition-all">
+                <div>
+                    <h3 class="text-xl font-black text-slate-800">Trạm A - Khu Phố Trúc</h3>
+                    <p class="text-sm text-slate-500 mt-1 font-medium">Sức chứa: 50 xe | Hiện có: 12 xe</p>
+                </div>
+                <button class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors">Cấu hình</button>
+            </div>
+
+            <button onclick="toggleModal(true)" class="border-4 border-dashed border-slate-200 rounded-[32px] p-8 flex items-center justify-center gap-4 hover:border-[#00a859] hover:bg-green-50/50 group transition-all">
+                <div class="w-12 h-12 bg-slate-100 group-hover:bg-[#00a859] group-hover:text-white rounded-full flex items-center justify-center text-slate-400 transition-all">
+                    <i class="fas fa-plus text-xl"></i>
+                </div>
+                <span class="text-xl font-black text-slate-400 group-hover:text-[#00a859]">Thêm trạm mới</span>
+            </button>
+        </div>
+    </main>
+
+    <div id="addStationModal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="modal-content bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 relative">
+            <button onclick="toggleModal(false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-green-50 text-[#00a859] rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                    <i class="fas fa-map-location-dot"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800">Khởi tạo trạm mới</h2>
+                <p class="text-sm text-slate-400 font-medium">Nhập thông tin vị trí trạm dừng tiếp theo.</p>
+            </div>
+
+            <form class="space-y-6">
+                <div>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Tên trạm dừng</label>
+                    <input type="text" placeholder="Vd: Công viên Mùa Hạ" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Sức chứa tối đa (xe)</label>
+                    <input type="number" placeholder="Vd: 30" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="toggleModal(false)" class="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Hủy</button>
+                    <button type="submit" class="flex-1 px-6 py-4 bg-[#00a859] text-white font-black rounded-2xl shadow-lg shadow-green-100 hover:transform hover:-translate-y-1 transition-all">Lưu thông tin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(show) {
+            const modal = document.getElementById('addStationModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => modal.classList.add('active'), 10);
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        }
+
+        // Đóng modal khi click ra ngoài
+        window.onclick = function(event) {
+            const modal = document.getElementById('addStationModal');
+            if (event.target == modal) {
+                toggleModal(false);
+            }
+        }
+    </script>
+</body>
+</html>
