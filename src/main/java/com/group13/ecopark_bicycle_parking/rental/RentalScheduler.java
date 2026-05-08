@@ -28,7 +28,7 @@ public class RentalScheduler {
     @Transactional
     public void cancelExpiredReservations() {
         // Tìm mốc thời gian cách đây 15 phút
-        LocalDateTime timeLimit = LocalDateTime.now().minusMinutes(1);
+        LocalDateTime timeLimit = LocalDateTime.now().minusMinutes(15);
 
         // Lấy tất cả các đơn đặt xe (RESERVED) trước mốc 15 phút đó
         List<Rental> expiredRentals = rentalRepository.findByStatusAndReservedAtBefore("RESERVED", timeLimit);
