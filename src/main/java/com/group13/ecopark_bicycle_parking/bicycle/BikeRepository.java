@@ -14,4 +14,7 @@ public interface BikeRepository extends JpaRepository<Bike, Integer> {
     long countByStationStationIdAndIsDeletedFalse(Integer stationId);
 
     long countByStationStationIdAndStatusAndIsDeletedFalse(Integer stationId, String status);
+    
+    // Thêm hàm đếm số xe đang đỗ tại bãi
+    int countByStationStationId(Integer stationId);
 }
