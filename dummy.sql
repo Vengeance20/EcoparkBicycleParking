@@ -1,0 +1,69 @@
+-- ========================================================
+-- 1. THÊM DỮ LIỆU NGƯỜI DÙNG (USERS)
+-- ========================================================
+-- Mật khẩu dummy đều là: 123456 (đã được băm bằng BCrypt giả định)
+INSERT INTO users (user_id, username, password_hash, full_name, email, national_id, phone_number, role, wallet_balance, is_deleted) VALUES
+                                                                                                                                        (1, 'admin01', '$2a$10$dummyHashAdmin...', 'Hệ Thống Admin', 'admin@ecopark.vn', '001099111222', '0901111222', 'ADMIN', 0.00, false),
+                                                                                                                                        (2, 'manager01', '$2a$10$dummyHashManager...', 'Trần Quản Lý', 'quanly1@ecopark.vn', '001099333444', '0903333444', 'MANAGER', 0.00, false),
+                                                                                                                                        (3, 'quang_customer', '$2a$10$dummyHashCustomer...', 'Nguyễn Văn Quang', 'quang@gmail.com', '001099555666', '0905555666', 'CUSTOMER', 158.00, false),
+                                                                                                                                        (4, 'mai_customer', '$2a$10$dummyHashCustomer...', 'Lê Hoàng Mai', 'mai.le@gmail.com', '001099777888', '0907777888', 'CUSTOMER', 50.00, false);
+
+-- ========================================================
+-- 2. THÊM DỮ LIỆU BÃI XE (STATIONS)
+-- ========================================================
+INSERT INTO stations (station_id, name, latitude, longitude, capacity, status, is_deleted) VALUES
+                                                                                               (1, 'Bãi xe Công viên Mùa Thu', 20.96345100, 105.93152600, 20, 'ACTIVE', false),
+                                                                                               (2, 'Bãi xe Hồ Thiên Nga', 20.95781200, 105.93412000, 15, 'ACTIVE', false);
+
+-- ========================================================
+-- 3. PHÂN CÔNG QUẢN LÝ (STATION MANAGERS)
+-- ========================================================
+-- Phân công Manager Trần Quản Lý (ID: 2) coi sóc Bãi xe Mùa Thu (ID: 1)
+INSERT INTO station_managers (assignment_id, manager_id, station_id) VALUES
+    (1, 2, 1);
+
+-- ========================================================
+-- 4. THÊM BẢNG GIÁ / DANH MỤC XE (VEHICLE CATEGORIES)
+-- ========================================================
+INSERT INTO bike_categories (category_id, name, base_fee, extra_fee) VALUES
+                                                                         (1, 'SINGLE', 50.00, 10.00),     -- Xe đơn: 50đ/60p đầu, 10đ/15p lố
+                                                                         (2, 'DOUBLE', 80.00, 15.00),     -- Xe đôi: 80đ/60p đầu, 15đ/15p lố
+                                                                         (3, 'ELECTRIC', 100.00, 25.00);  -- Xe điện: 100đ/60p đầu, 25đ/15p lố
+
+-- ========================================================
+-- 5. THÊM DỮ LIỆU XE ĐẠP (BIKES)
+-- ========================================================
+INSERT INTO bikes (bike_id, category_id, station_id, bike_code, status, is_deleted) VALUES
+                                                                                        (1, 1, 1, 'ECO-S-001', 'AVAILABLE', false), -- Xe đơn ở Công viên Mùa Thu
+                                                                                        (2, 1, 1, 'ECO-S-002', 'AVAILABLE', false), -- Xe đơn ở Công viên Mùa Thu
+                                                                                        (3, 3, 1, 'ECO-E-001', 'MAINTENANCE', false), -- Xe điện đang bảo trì
+                                                                                        (4, 2, 2, 'ECO-D-001', 'AVAILABLE', false), -- Xe đôi ở Hồ Thiên Nga
+                                                                                        (5, 1, NULL, 'ECO-S-003', 'IN_USE', false); -- Xe đơn đang được khách mượn (Station = NULL)
+
+-- ========================================================
+-- 6. THÊM LỊCH SỬ CHUYẾN ĐI (RENTALS)
+-- ========================================================
+INSERT INTO rentals (rental_id, user_id, bike_id, start_station_id, end_station_id, reserved_at, start_time, end_time, rental_fee, penalty_fee, discount, total_fee, status) VALUES
+-- Chuyến 1: Khách Quang đi xe đơn đúng giờ (Dưới 60p) - Tổng phí 50, giảm 40% (Cư dân) -> Trả 30đ
+(1, 3, 1, 1, 2, '2023-10-01 07:00:00', '2023-10-01 07:05:00', '2023-10-01 07:45:00', 50.00, 0.00, 40, 30.00, 'COMPLETED'),
+
+-- Chuyến 2: Khách Mai đi lố giờ (70p) -> Base 50 + 1 block extra 10 = 60đ (Không giảm giá)
+(2, 4, 4, 2, 1, '2023-10-02 16:00:00', '2023-10-02 16:02:00', '2023-10-02 17:12:00', 60.00, 0.00, 0, 60.00, 'COMPLETED'),
+
+-- Chuyến 3: Khách Quang đang mượn chiếc xe số 5, chưa trả nên end_time, fee đều NULL
+(3, 3, 5, 1, NULL, '2023-10-25 08:00:00', '2023-10-25 08:10:00', NULL, NULL, 0.00, 40, NULL, 'ACTIVE');
+
+-- ========================================================
+-- 7. THÊM GIAO DỊCH VÍ (WALLET TRANSACTIONS)
+-- ========================================================
+INSERT INTO wallet_transactions (transaction_id, user_id, rental_id, transaction_type, amount, created_at) VALUES
+-- Lịch sử ví của Quang (User 3)
+(1, 3, NULL, 'TOPUP', 200.00, '2023-09-30 10:00:00'),          -- Nạp 200đ
+(2, 3, 1, 'RENTAL_PAYMENT', -30.00, '2023-10-01 07:45:00'),   -- Thanh toán chuyến 1 (-30đ)
+(3, 3, 3, 'RENTAL_DEPOSIT', -12.00, '2023-10-25 08:10:00'),   -- Trừ tạm ứng/cọc chuyến 3 đang đi (-12đ)
+-- Note: Số dư hiện tại của Quang = 200 - 30 - 12 = 158.00 (Khớp với cột wallet_balance ở bảng Users)
+
+-- Lịch sử ví của Mai (User 4)
+(4, 4, NULL, 'TOPUP', 110.00, '2023-10-02 15:30:00'),         -- Nạp 110đ
+(5, 4, 2, 'RENTAL_PAYMENT', -60.00, '2023-10-02 17:12:00');   -- Thanh toán chuyến 2 (-60đ)
+-- Note: Số dư hiện tại của Mai = 110 - 60 = 50.00 (Khớp với cột wallet_balance ở bảng Users)

@@ -3,6 +3,8 @@ package com.group13.ecopark_bicycle_parking.rental;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class RentalDTO {
@@ -18,6 +20,21 @@ public class RentalDTO {
         private Integer rentalId;
         private String bikeCode;
         private LocalDateTime startTime;
+        private String message;
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class ReturnRequest {
+        private Integer rentalId;
+        private Integer endStationId; // Mã bãi xe mà khách trả vào
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class ReturnResponse {
+        private Integer rentalId;
+        private long durationMinutes; // Tổng thời gian đi
+        private BigDecimal totalFee;  // Tổng phí
+        private BigDecimal refundAmount; // Số tiền được hoàn lại (nếu có)
         private String message;
     }
 }
