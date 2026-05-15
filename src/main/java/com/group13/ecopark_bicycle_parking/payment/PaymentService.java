@@ -73,4 +73,46 @@ public class PaymentService {
         System.out.println("Cổng thanh toán: Đã nhận thành công " + amountVnd + " VNĐ từ khách hàng.");
         return true; // Giao dịch thành công
     }
+
+    @Transactional
+    public PaymentDTO.WithdrawResponse processWithdrawal(Integer userId, BigDecimal pointsToWithdraw) {
+
+        // 1. Xác thực và [checkBalance]
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy người dùng."));
+
+        if (pointsToWithdraw.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Lỗi: Số điểm rút phải lớn hơn 0.");
+        }
+
+        if (user.getWalletBalance().compareTo(pointsToWithdraw) < 0) {
+            throw new RuntimeException("Lỗi: Số dư ví không đủ để thực hiện giao dịch này.");
+        }
+
+        // 2. [deductBalance] - Trừ điểm KHÓA SỔ NGAY LẬP TỨC để chống double-spending
+        user.setWalletBalance(user.getWalletBalance().subtract(pointsToWithdraw));
+        userRepository.save(user);
+
+        // 3. Ghi log Kiểm toán
+        WalletTransaction tx = WalletTransaction.builder()
+                .user(user)
+                .rental(null)
+                .transactionType("WITHDRAW") // Trạng thái chuyển khoản
+                .amount(pointsToWithdraw.negate())   // Số âm (Trừ ra khỏi hệ thống)
+                .build();
+        tx = walletTransactionRepository.save(tx);
+
+        // 4. Tính toán tiền mặt dự kiến khách nhận được (x1000)
+        BigDecimal expectedVnd = pointsToWithdraw.multiply(new BigDecimal("1000"))
+                .setScale(0, RoundingMode.HALF_UP);
+
+        // 5. Trả về thông báo Processing như Sequence Diagram yêu cầu
+        return new PaymentDTO.WithdrawResponse(
+                tx.getTransactionId(),
+                pointsToWithdraw,
+                expectedVnd,
+                user.getWalletBalance(),
+                "Yêu cầu rút tiền đang được xử lý (Processing). Số tiền dự kiến chuyển vào tài khoản ngân hàng của bạn là: " + expectedVnd + " VNĐ."
+        );
+    }
 }

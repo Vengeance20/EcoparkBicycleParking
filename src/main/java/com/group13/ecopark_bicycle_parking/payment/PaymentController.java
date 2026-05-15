@@ -22,4 +22,17 @@ public class PaymentController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/withdraw")
+    public ResponseEntity<?> withdrawWallet(@RequestBody PaymentDTO.WithdrawRequest request) {
+        try {
+            PaymentDTO.WithdrawResponse response = paymentService.processWithdrawal(
+                    request.getUserId(),
+                    request.getPointsToWithdraw()
+            );
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

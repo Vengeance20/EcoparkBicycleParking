@@ -20,4 +20,18 @@ public class PaymentDTO {
         private BigDecimal currentBalance;  // Tổng số dư hiện tại
         private String message;
     }
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class WithdrawRequest {
+        private Integer userId;
+        private BigDecimal pointsToWithdraw; // Khách nhập số Điểm muốn rút
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class WithdrawResponse {
+        private Integer transactionId;
+        private BigDecimal deductedPoints; // Điểm đã trừ
+        private BigDecimal expectedVnd;    // Tiền mặt dự kiến nhận
+        private BigDecimal currentBalance;
+        private String message;
+    }
 }
