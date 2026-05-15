@@ -1,0 +1,140 @@
+U1 ACCOUNT MANAGEMENT - POSTMAN TEST GUIDE
+
+Base URL:
+http://localhost:8080
+
+U1 has 4 functions:
+1. Register account
+2. Login
+3. Update profile
+4. Verify resident card
+
+Note:
+- All APIs below use JSON body.
+- The project database design does not have a card_user_id column.
+- /verify-card maps request field cardUserId to users.national_id.
+- application.properties points to existing database ecopark_bicycle_parking.
+
+============================================================
+1. REGISTER ACCOUNT
+============================================================
+
+Method:
+POST
+
+URL:
+http://localhost:8080/register
+
+Headers:
+Content-Type: application/json
+
+Body:
+{
+  "username": "user_test01",
+  "password": "123456",
+  "fullName": "Nguyen Van Test",
+  "email": "test01@gmail.com",
+  "nationalId": "001122334455",
+  "phoneNumber": "0901234567"
+}
+
+Expected success:
+Returns the created user information.
+
+Example success response:
+{
+  "userId": 5,
+  "username": "user_test01",
+  "fullName": "Nguyen Van Test",
+  "email": "test01@gmail.com",
+  "nationalId": "001122334455",
+  "phoneNumber": "0901234567",
+  "role": "CUSTOMER",
+  "walletBalance": 0
+}
+
+Expected error:
+Email taken
+
+============================================================
+2. LOGIN
+============================================================
+
+Method:
+POST
+
+URL:
+http://localhost:8080/login
+
+Headers:
+Content-Type: application/json
+
+Body:
+{
+  "email": "test01@gmail.com",
+  "password": "123456"
+}
+
+Expected success:
+Returns the logged-in user information.
+
+Expected error:
+Invalid credentials
+
+============================================================
+3. UPDATE PROFILE
+============================================================
+
+Method:
+PUT
+
+URL:
+http://localhost:8080/update-profile/5
+
+Headers:
+Content-Type: application/json
+
+Body:
+{
+  "fullName": "Nguyen Van Test Updated",
+  "email": "test01_updated@gmail.com",
+  "nationalId": "001122334455",
+  "phoneNumber": "0912345678"
+}
+
+Expected success:
+Returns the updated user information.
+
+Expected errors:
+User not found
+Email taken
+
+Note:
+- Replace 5 in /update-profile/5 with the actual userId from register response.
+
+============================================================
+4. VERIFY RESIDENT CARD
+============================================================
+
+Method:
+POST
+
+URL:
+http://localhost:8080/verify-card
+
+Headers:
+Content-Type: application/json
+
+Body:
+{
+  "cardUserId": "001122334455"
+}
+
+Expected success:
+Returns the user whose nationalId matches cardUserId.
+
+Expected error:
+Card not found
+
+Note:
+- If you updated nationalId in Update Profile, use the updated nationalId here.
