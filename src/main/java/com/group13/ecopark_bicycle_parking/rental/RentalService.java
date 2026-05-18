@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class RentalService {
@@ -148,5 +149,50 @@ public class RentalService {
         bikeRepository.save(bike);
 
         return "Mở khóa thành công. Bắt đầu tính tiền thuê từ lúc này!";
+    }
+
+    @Transactional(readOnly = true)
+    public List<RentalDTO.RentalHistoryResponse> getRentalHistory(String userKey) {
+        User user = findUserForHistory(userKey);
+
+        return rentalRepository.findAllByUserUserIdOrderByRentalIdDesc(user.getUserId())
+                .stream()
+                .map(this::toRentalHistoryResponse)
+                .toList();
+    }
+
+    private User findUserForHistory(String userKey) {
+        if (userKey == null || userKey.trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Không tìm thấy người dùng.");
+        }
+
+        String trimmedUserKey = userKey.trim();
+        if (trimmedUserKey.matches("\\d+")) {
+            try {
+                return userRepository.findById(Integer.parseInt(trimmedUserKey))
+                        .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy người dùng."));
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Lỗi: Không tìm thấy người dùng.");
+            }
+        }
+
+        return userRepository.findByUsername(trimmedUserKey)
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy người dùng."));
+    }
+
+    private RentalDTO.RentalHistoryResponse toRentalHistoryResponse(Rental rental) {
+        return new RentalDTO.RentalHistoryResponse(
+                rental.getRentalId(),
+                rental.getBike().getBikeCode(),
+                rental.getStartStation() == null ? null : rental.getStartStation().getName(),
+                rental.getEndStation() == null ? null : rental.getEndStation().getName(),
+                rental.getStartTime(),
+                rental.getEndTime(),
+                rental.getRentalFee(),
+                rental.getPenaltyFee(),
+                rental.getDiscount(),
+                rental.getTotalFee(),
+                rental.getStatus()
+        );
     }
 }

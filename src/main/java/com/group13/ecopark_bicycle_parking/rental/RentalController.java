@@ -50,4 +50,16 @@ public class RentalController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // ==========================================
+    // API 3: Xem lịch sử thuê xe
+    // ==========================================
+    @GetMapping("/history/{userKey}")
+    public ResponseEntity<?> getRentalHistory(@PathVariable String userKey) {
+        try {
+            return ResponseEntity.ok(rentalService.getRentalHistory(userKey));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
