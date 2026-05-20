@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
-@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+//@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+@SpringBootApplication
 public class EcoparkBicycleParkingApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(EcoparkBicycleParkingApplication.class, args);
