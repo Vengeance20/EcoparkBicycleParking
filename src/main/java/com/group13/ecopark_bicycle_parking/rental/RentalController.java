@@ -51,6 +51,13 @@ public class RentalController {
         }
     }
 
+    // ==========================================
+    // API 3: Xem lịch sử thuê xe
+    // ==========================================
+    @GetMapping("/history/{userKey}")
+    public ResponseEntity<?> getRentalHistory(@PathVariable String userKey) {
+        try {
+            return ResponseEntity.ok(rentalService.getRentalHistory(userKey));
     // Nối hàm này vào Controller để gọi xuống Service
     @PostMapping("/return")
     public ResponseEntity<?> returnBike(@RequestBody RentalDTO.ReturnRequest request) {

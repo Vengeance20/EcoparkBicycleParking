@@ -24,6 +24,20 @@ public class RentalDTO {
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor
+    public static class RentalHistoryResponse {
+        private Integer rentalId;
+        private String bikeCode;
+        private String startStationName;
+        private String endStationName;
+        private LocalDateTime startTime;
+        private LocalDateTime endTime;
+        private BigDecimal rentalFee;
+        private BigDecimal penaltyFee;
+        private Integer discount;
+        private BigDecimal totalFee;
+        private String status;
+    }
+}
     public static class ReturnRequest {
         private Integer rentalId;
         private Integer endStationId; // Mã bãi xe mà khách trả vào

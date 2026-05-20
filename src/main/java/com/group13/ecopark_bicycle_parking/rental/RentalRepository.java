@@ -16,4 +16,7 @@ public interface RentalRepository extends JpaRepository<Rental, Integer> {
     // 2. Dùng cho API Nhận xe (Unlock): Tìm đúng chuyến đi của user đó, xe đó, đang chờ nhận
     Optional<Rental> findByUserUserIdAndBikeBikeCodeAndStatus(Integer userId, String bikeCode, String status);
 
+    // 3. Dùng cho U7 - View History: Lấy lịch sử thuê xe của một user, mới nhất trước
+    List<Rental> findAllByUserUserIdOrderByRentalIdDesc(Integer userId);
+
 }
