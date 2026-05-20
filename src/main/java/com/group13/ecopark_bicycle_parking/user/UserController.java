@@ -1,16 +1,23 @@
 package com.group13.ecopark_bicycle_parking.user;
 
+import com.group13.ecopark_bicycle_parking.security.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
+@RequestMapping("/apiv1/auth")
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil; // Thêm máy in thẻ
 
-    public UserController(UserService userService) {
+    // Nhúng JwtUtil qua Constructor
+    public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/register")
@@ -25,7 +32,17 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserDTO.LoginRequest credentials) {
         try {
-            return ResponseEntity.ok(userService.authenticate(credentials));
+            // 1. Xác thực tài khoản (Kiểm tra email, password)
+            UserDTO.UserResponse user = userService.authenticate(credentials);
+
+            // 2. Cấp thẻ JWT Token (Dùng username làm định danh)
+            String token = jwtUtil.generateToken(user.getUsername());
+
+            // 3. Trả về cả thông tin User và Token
+            return ResponseEntity.ok(Map.of(
+                    "user", user,
+                    "accessToken", token
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
