@@ -1,0 +1,234 @@
+HUONG DAN CHAY 
+
+============================================================
+1. CAU HINH DATABASE HIEN TAI
+============================================================
+
+File cau hinh:
+src/main/resources/application.properties
+
+Noi dung dang dung:
+
+spring.datasource.url=jdbc:mysql://localhost:3306/ecopark_bicycle_parking?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+spring.datasource.username=root
+spring.datasource.password=
+
+Neu MySQL XAMPP cua ban co mat khau thi sua dong:
+
+spring.datasource.password=mat_khau_cua_ban
+
+============================================================
+2. BAT MYSQL BANG XAMPP
+============================================================
+
+1. Mo XAMPP Control Panel.
+2. Bam Start o dong MySQL.
+3. Mo trinh duyet vao:
+
+http://localhost/phpmyadmin
+
+4. Tao database ten:
+
+ecopark_bicycle_parking
+
+Neu database da ton tai va bi loi duplicate khi import SQL, co the xoa database cu,
+tao lai database moi cung ten roi import lai.
+
+============================================================
+3. TEST TAO BANG DATABASE
+============================================================
+
+Sau khi chay Spring Boot lan dau, Hibernate se tu tao bang trong database.
+
+Cach kiem tra bang da duoc tao:
+
+1. Vao:
+
+http://localhost/phpmyadmin
+
+2. Chon database:
+
+ecopark_bicycle_parking
+
+3. Kiem tra co cac bang sau:
+
+- accounts
+- users
+- stations
+- station_managers
+- bike_categories
+- bikes
+- rentals
+- wallet_transactions
+
+Neu thay cac bang tren la project da ket noi MySQL va tao bang thanh cong.
+
+Co the test bang SQL trong phpMyAdmin, tab SQL:
+
+SHOW TABLES;
+
+Hoac:
+
+SELECT * FROM users;
+SELECT * FROM bikes;
+SELECT * FROM stations;
+
+Neu SELECT bao bang khong ton tai thi:
+- Kiem tra MySQL XAMPP da Start chua.
+- Kiem tra dung database ecopark_bicycle_parking chua.
+- Kiem tra IntelliJ da chay thanh cong chua.
+
+============================================================
+4. IMPORT DU LIEU MAU
+============================================================
+
+File du lieu mau:
+
+dummy.sql
+
+Cach import:
+
+1. Vao phpMyAdmin.
+2. Chon database ecopark_bicycle_parking.
+3. Chon tab Import.
+4. Chon file: dummy.sql
+
+5. Bam Import.
+
+Sau khi import, kiem tra:
+
+SELECT * FROM users;
+SELECT * FROM bikes;
+SELECT * FROM rentals;
+
+Luu y:
+- File dummy.sql hien chi seed bang users, stations, bikes, rentals...
+- File nay chua seed bang accounts.
+- Vi vay muon login API thi nen dung API register truoc.
+- Neu import nhieu lan co the bi loi duplicate id/email/phone.
+
+============================================================
+5. TEST API BANG POSTMAN
+============================================================
+
+Base URL:
+
+http://localhost:8080
+
+------------------------------------------------------------
+9.1. Register account
+------------------------------------------------------------
+
+Method:
+POST
+
+URL:
+http://localhost:8080/api/auth/register
+
+Body:
+Chon Body -> raw -> JSON, dan noi dung:
+
+{
+  "email": "test@gmail.com",
+  "password": "123456",
+  "fullName": "Test User",
+  "phoneNumber": "0900000000",
+  "address": "Ecopark",
+  "cardId": "CARD001"
+}
+
+Neu thanh cong se tra ve success = true.
+
+------------------------------------------------------------
+9.2. Login lay token
+------------------------------------------------------------
+
+Method:
+POST
+
+URL:
+http://localhost:8080/api/auth/login
+
+Body JSON:
+
+{
+  "email": "test@gmail.com",
+  "password": "123456"
+}
+
+Sau khi Send, copy token trong:
+
+data.token
+
+------------------------------------------------------------
+9.3. Test API thue xe
+------------------------------------------------------------
+
+Dieu kien:
+- Da import dummy.sql.
+- Da login va co token.
+
+Method:
+POST
+
+URL:
+http://localhost:8080/apiv1/rentals/rent
+
+Headers:
+
+Authorization: Bearer TOKEN_CUA_BAN
+Content-Type: application/json
+
+Body JSON:
+
+{
+  "userId": 3,
+  "bikeCode": "ECO-S-001"
+}
+
+Neu thanh cong se tra ve rentalId, bikeCode, startTime va message.
+
+------------------------------------------------------------
+9.4. Test API dat xe truoc
+------------------------------------------------------------
+
+Method:
+POST
+
+URL:
+http://localhost:8080/apiv1/rentals/reserve
+
+Headers:
+
+Authorization: Bearer TOKEN_CUA_BAN
+Content-Type: application/json
+
+Body JSON:
+
+{
+  "userId": 3,
+  "bikeCode": "ECO-S-002"
+}
+
+------------------------------------------------------------
+9.5. Test API mo khoa xe da dat
+------------------------------------------------------------
+
+Method:
+POST
+
+URL:
+http://localhost:8080/apiv1/rentals/unlock
+
+Headers:
+
+Authorization: Bearer TOKEN_CUA_BAN
+Content-Type: application/json
+
+Body JSON:
+
+{
+  "userId": 3,
+  "bikeCode": "ECO-S-002"
+}
+

@@ -1,7 +1,10 @@
 package com.group13.ecopark_bicycle_parking.rental;
 
 import com.group13.ecopark_bicycle_parking.bicycle.Bike;
+import com.group13.ecopark_bicycle_parking.bicycle.BikeCategory;
 import com.group13.ecopark_bicycle_parking.bicycle.BikeRepository;
+import com.group13.ecopark_bicycle_parking.station.Station;
+import com.group13.ecopark_bicycle_parking.station.StationRepository;
 import com.group13.ecopark_bicycle_parking.user.User;
 import com.group13.ecopark_bicycle_parking.user.UserRepository;
 import com.group13.ecopark_bicycle_parking.user.WalletTransaction;
@@ -11,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class RentalService {
@@ -21,6 +26,7 @@ public class RentalService {
     @Autowired private BikeRepository bikeRepository;
     @Autowired private RentalRepository rentalRepository;
     @Autowired private WalletTransactionRepository walletTransactionRepository;
+    @Autowired private StationRepository stationRepository;
 
     @Transactional // Đảm bảo All-or-Nothing (Thành công tất cả hoặc Rollback toàn bộ)
     public RentalDTO.RentResponse rentBike(RentalDTO.RentRequest request) {
@@ -193,6 +199,103 @@ public class RentalService {
                 rental.getDiscount(),
                 rental.getTotalFee(),
                 rental.getStatus()
+        );
+    }
+}
+    @Transactional
+    public RentalDTO.ReturnResponse returnBike(RentalDTO.ReturnRequest request) {
+
+        // 1. Lấy thông tin chuyến đi
+        Rental rental = rentalRepository.findById(request.getRentalId())
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy hóa đơn chuyến đi."));
+
+        if (!"ACTIVE".equals(rental.getStatus())) {
+            throw new RuntimeException("Lỗi: Chuyến đi này chưa bắt đầu hoặc đã kết thúc.");
+        }
+
+        // 2. Lấy thông tin bãi trả xe và KIỂM TRA SỨC CHỨA (Capacity Check)
+        Station endStation = stationRepository.findById(request.getEndStationId())
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy bãi trả xe."));
+
+        int currentBikesInStation = bikeRepository.countByStationStationId(endStation.getStationId());
+        if (currentBikesInStation >= endStation.getCapacity()) {
+            throw new RuntimeException("Lỗi: Bãi đỗ '" + endStation.getName() + "' đã đạt sức chứa tối đa (" + endStation.getCapacity() + " xe). Vui lòng tìm bãi đỗ khác.");
+        }
+
+        // 3. Chốt thời gian và tính tiền
+        LocalDateTime endTime = LocalDateTime.now();
+        rental.setEndTime(endTime);
+
+        long durationMinutes = ChronoUnit.MINUTES.between(rental.getStartTime(), endTime);
+        if (durationMinutes < 1) durationMinutes = 1;
+
+        BikeCategory category = rental.getBike().getCategory();
+        BigDecimal baseFee = category.getBaseFee();
+        BigDecimal extraFee = category.getExtraFee();
+        BigDecimal calculatedFee = baseFee;
+
+        // Tính phí phụ trội nếu đi quá 60 phút
+        if (durationMinutes > 60) {
+            long extraMinutes = durationMinutes - 60;
+            long extraBlocks = (long) Math.ceil(extraMinutes / 15.0);
+            calculatedFee = baseFee.add(extraFee.multiply(new BigDecimal(extraBlocks)));
+        }
+
+        // 4. Áp dụng giảm giá an toàn (Scale 2, RoundingMode HALF_UP cho DECIMAL(10,2))
+        BigDecimal discountRate = BigDecimal.valueOf(100 - rental.getDiscount())
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        BigDecimal totalFee = calculatedFee.multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
+
+        rental.setRentalFee(calculatedFee);
+        rental.setTotalFee(totalFee);
+        rental.setEndStation(endStation);
+        rental.setStatus("COMPLETED");
+
+        // 5. Cơ chế quyết toán Ví Điểm (Deposit Refund Mechanism)
+        User user = rental.getUser();
+        BigDecimal difference = baseFee.subtract(totalFee).setScale(2, RoundingMode.HALF_UP);
+
+        String txType = null;
+        BigDecimal refundAmount = BigDecimal.ZERO;
+
+        if (difference.compareTo(BigDecimal.ZERO) > 0) {
+            // Cọc dư -> Hoàn lại tiền thừa
+            txType = "REFUND_SURPLUS";
+            refundAmount = difference;
+            user.setWalletBalance(user.getWalletBalance().add(refundAmount));
+        } else if (difference.compareTo(BigDecimal.ZERO) < 0) {
+            // Cọc thiếu -> Trừ thêm tiền phạt trễ giờ (Difference đang là số âm)
+            txType = "RENTAL_EXTRA_FEE";
+            user.setWalletBalance(user.getWalletBalance().add(difference));
+        }
+
+        userRepository.save(user);
+
+        // Ghi sổ cái giao dịch nếu có biến động tiền
+        if (difference.compareTo(BigDecimal.ZERO) != 0) {
+            WalletTransaction tx = WalletTransaction.builder()
+                    .user(user).rental(rental)
+                    .transactionType(txType)
+                    .amount(difference)
+                    .build();
+            walletTransactionRepository.save(tx);
+        }
+
+        // 6. Cất xe vào bãi
+        Bike bike = rental.getBike();
+        bike.setStatus("AVAILABLE");
+        bike.setStation(endStation);
+        bikeRepository.save(bike);
+
+        rentalRepository.save(rental);
+
+        return new RentalDTO.ReturnResponse(
+                rental.getRentalId(),
+                durationMinutes,
+                totalFee,
+                refundAmount,
+                "Trả xe thành công! Cảm ơn bạn đã sử dụng Ecopark Bikes."
         );
     }
 }
