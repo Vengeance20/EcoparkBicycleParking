@@ -9,13 +9,17 @@ import java.time.LocalDateTime;
 
 public class RentalDTO {
 
-    @Data @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RentRequest {
         private Integer userId;     // ID người đang dùng app
         private String bikeCode;
     }
 
-    @Data @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RentResponse {
         private Integer rentalId;
         private String bikeCode;
@@ -23,7 +27,9 @@ public class RentalDTO {
         private String message;
     }
 
-    @Data @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RentalHistoryResponse {
         private Integer rentalId;
         private String bikeCode;
@@ -37,13 +43,18 @@ public class RentalDTO {
         private BigDecimal totalFee;
         private String status;
     }
-}
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReturnRequest {
         private Integer rentalId;
         private Integer endStationId; // Mã bãi xe mà khách trả vào
     }
 
-    @Data @NoArgsConstructor @AllArgsConstructor
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReturnResponse {
         private Integer rentalId;
         private long durationMinutes; // Tổng thời gian đi
@@ -52,3 +63,4 @@ public class RentalDTO {
         private String message;
     }
 }
+

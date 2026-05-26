@@ -8,4 +8,7 @@ import java.util.Optional;
 @Repository
 public interface StationRepository extends JpaRepository<Station, Integer> {
     Optional<Station> findByStationIdAndIsDeletedFalse(Integer stationId);
+
+    // Tìm trạm theo tên bãi đỗ xe
+    Optional<Station> findByName(String name);
 }
