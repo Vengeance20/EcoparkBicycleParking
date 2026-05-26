@@ -1,6 +1,7 @@
 package com.group13.ecopark_bicycle_parking.station;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -29,5 +30,8 @@ public interface StationManagerRepository extends JpaRepository<StationManager, 
             where sm.manager.userId = :managerId
             group by s.stationId, s.name, s.latitude, s.longitude, s.capacity, s.status
             """)
+           
     List<StationMonitorDTO> findMonitorDataByManager(@Param("managerId") Integer managerId);
+    // Tìm thông tin bãi xe được phân công dựa trên ID tài khoản Manager
+    Optional<StationManager> findByManager_UserId(Integer managerId);
 }

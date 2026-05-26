@@ -58,6 +58,10 @@ public class RentalController {
     public ResponseEntity<?> getRentalHistory(@PathVariable String userKey) {
         try {
             return ResponseEntity.ok(rentalService.getRentalHistory(userKey));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
     // Nối hàm này vào Controller để gọi xuống Service
     @PostMapping("/return")
     public ResponseEntity<?> returnBike(@RequestBody RentalDTO.ReturnRequest request) {

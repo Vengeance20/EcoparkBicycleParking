@@ -201,7 +201,7 @@ public class RentalService {
                 rental.getStatus()
         );
     }
-}
+
     @Transactional
     public RentalDTO.ReturnResponse returnBike(RentalDTO.ReturnRequest request) {
 
