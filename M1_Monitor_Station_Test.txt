@@ -1,0 +1,82 @@
+M1 MONITOR STATION 
+
+Base URL:
+http://localhost:8080
+
+M1 function:
+1. Monitor assigned station of a manager
+
+Note:
+- This API follows System Design/Sequence Diagram/M1_Monitor Station Sequence.png.
+- It uses existing station package and existing tables: users, station_managers, stations, bikes.
+- It does not create a new folder/module.
+- It does not add manager_id to stations because the current database design uses station_managers.
+
+============================================================
+1. MONITOR ASSIGNED STATION
+============================================================
+
+Method:
+GET
+
+URL:
+http://localhost:8080/api/manager/station-monitor?managerId=2
+
+Params:
+managerId = 2
+
+Expected success:
+HTTP 200 OK
+
+Example success response:
+[
+  {
+    "stationId": 1,
+    "stationName": "Bai xe Cong vien Mua Thu",
+    "latitude": 20.96345100,
+    "longitude": 105.93152600,
+    "capacity": 20,
+    "stationStatus": "ACTIVE",
+    "totalVehicles": 3,
+    "availableVehicles": 2,
+    "inUseVehicles": 0,
+    "maintenanceVehicles": 1
+  }
+]
+
+Expected empty response:
+HTTP 200 OK
+[]
+
+This means the manager exists and has role MANAGER, but no station is assigned
+in station_managers.
+
+Expected errors:
+Manager not found
+User is not a manager
+
+============================================================
+TEST DATA REQUIREMENT
+============================================================
+
+The managerId must point to a user with role MANAGER.
+
+Example required data:
+
+users:
+user_id = 2
+role = MANAGER
+
+station_managers:
+manager_id = 2
+station_id = 1
+
+stations:
+station_id = 1
+
+bikes:
+station_id = 1
+status can be AVAILABLE, IN_USE, MAINTENANCE
+
+If your manager user has a different user_id, replace managerId=2 in the URL.
+
