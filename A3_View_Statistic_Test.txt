@@ -1,0 +1,121 @@
+A3 VIEW STATISTIC - BACKEND TEST
+
+Base URL:
+http://localhost:8080
+
+Database:
+ecopark_bicycle_parking
+
+A3 API:
+GET /api/statistics?startDate=...&endDate=...
+
+No Authorization token is required.
+Do not add Body.
+
+============================================================
+0. XAMPP / DATABASE CHECK
+============================================================
+
+1. Open XAMPP Control Panel.
+2. Start MySQL.
+3. Open phpMyAdmin:
+   http://localhost/phpmyadmin
+4. Make sure database exists:
+   ecopark_bicycle_parking
+
+application.properties must contain:
+
+spring.datasource.url=jdbc:mysql://localhost:3306/ecopark_bicycle_parking?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+If Spring Boot still logs "Unknown database 'ecopark_bicycle_parking'", check that MySQL in XAMPP is running and this database exists in phpMyAdmin.
+
+The copied text "Expand/CollapseStructure" from phpMyAdmin is not part of the table name.
+
+============================================================
+1. VIEW STATISTICS
+============================================================
+
+Method:
+GET
+
+URL:
+http://localhost:8080/api/statistics?startDate=2023-10-01&endDate=2023-10-31
+
+Expected:
+HTTP 200 OK
+
+Response includes:
+hasData, rentalRequests, completedRentals, uniqueCustomers, totalRevenue,
+totalRentalFee, totalPenaltyFee, averageRevenuePerRental,
+walletTransactionCount, walletNetAmount, totalTopUp, totalRentalPayment,
+totalRentalDeposit, totalRefund, totalExtraFee, revenueTrend, topStations.
+
+============================================================
+2. EMPTY STATISTICS
+============================================================
+
+Method:
+GET
+
+URL:
+http://localhost:8080/api/statistics?startDate=2099-01-01&endDate=2099-01-31
+
+Expected:
+HTTP 200 OK
+
+Expected key fields:
+hasData = false
+revenueTrend = []
+topStations = []
+
+============================================================
+3. INVALID DATE RANGE
+============================================================
+
+Method:
+GET
+
+URL:
+http://localhost:8080/api/statistics?startDate=2023-10-31&endDate=2023-10-01
+
+Expected:
+HTTP 400 Bad Request
+
+Expected body:
+startDate must be before or equal to endDate
+
+============================================================
+4. SQL CHECKS
+============================================================
+
+Completed rentals:
+
+SELECT rental_id, start_time, end_time, rental_fee, penalty_fee, total_fee, status
+FROM rentals
+WHERE end_time BETWEEN '2023-10-01 00:00:00' AND '2023-10-31 23:59:59'
+  AND status = 'COMPLETED';
+
+Wallet transactions:
+
+SELECT transaction_id, transaction_type, amount, created_at
+FROM wallet_transactions
+WHERE created_at BETWEEN '2023-10-01 00:00:00' AND '2023-10-31 23:59:59';
+
+Revenue trend by day:
+
+SELECT DATE(end_time) AS revenue_date, COUNT(*) AS completed_rentals, SUM(total_fee) AS total_revenue
+FROM rentals
+WHERE end_time BETWEEN '2023-10-01 00:00:00' AND '2023-10-31 23:59:59'
+  AND status = 'COMPLETED'
+GROUP BY DATE(end_time)
+ORDER BY DATE(end_time);
+
+Top stations:
+
+SELECT s.station_id, s.name, COUNT(*) AS completed_rentals, SUM(r.total_fee) AS total_revenue
+FROM rentals r
+JOIN stations s ON s.station_id = r.start_station_id
+WHERE r.end_time BETWEEN '2023-10-01 00:00:00' AND '2023-10-31 23:59:59'
+  AND r.status = 'COMPLETED'
+GROUP BY s.station_id, s.name
+ORDER BY total_revenue DESC;
