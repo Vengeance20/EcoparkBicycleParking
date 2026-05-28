@@ -34,4 +34,6 @@ public interface StationManagerRepository extends JpaRepository<StationManager, 
     List<StationMonitorDTO> findMonitorDataByManager(@Param("managerId") Integer managerId);
     // Tìm thông tin bãi xe được phân công dựa trên ID tài khoản Manager
     Optional<StationManager> findByManager_UserId(Integer managerId);
+
+    boolean existsByManagerUserIdAndStationStationId(Integer managerId, Integer stationId);
 }

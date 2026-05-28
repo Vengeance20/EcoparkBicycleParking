@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configure(http))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/apiv1/auth/**").permitAll()
+                        .requestMatchers("/apiv1/admin/users/managers").permitAll()
                         .requestMatchers("/api/statistics/**").permitAll()
                         .anyRequest().authenticated()
                 )

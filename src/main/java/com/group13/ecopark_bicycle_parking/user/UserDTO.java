@@ -79,6 +79,37 @@ public class UserDTO {
         private String nationalId;
         private String phoneNumber;
         private String role;
+        private String status;
         private BigDecimal walletBalance;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ManagerRequest {
+        private String mode;
+        private Integer existingUserId;
+        private String username;
+        private String password;
+        private String fullName;
+        private String email;
+        private String nationalId;
+        private String phoneNumber;
+        private Integer stationId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ManagerResponse {
+        private Integer userId;
+        private String username;
+        private String fullName;
+        private String email;
+        private String role;
+        private String status;
+        private Integer stationId;
+        private String stationName;
+        private String message;
     }
 }

@@ -1,5 +1,11 @@
 package com.group13.ecopark_bicycle_parking.user;
 
+import com.group13.ecopark_bicycle_parking.station.Station;
+import com.group13.ecopark_bicycle_parking.station.StationManager;
+import com.group13.ecopark_bicycle_parking.station.StationManagerRepository;
+import com.group13.ecopark_bicycle_parking.station.StationRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,14 +15,31 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.Locale;
 
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
+    private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_MANAGER = "MANAGER";
+    private static final String ROLE_CUSTOMER = "CUSTOMER";
+    private static final String STATUS_ACTIVE = "ACTIVE";
+    private static final String MODE_CREATE = "CREATE";
+    private static final String MODE_PROMOTE = "PROMOTE";
 
-    public UserService(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final StationRepository stationRepository;
+    private final StationManagerRepository stationManagerRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    public UserService(
+            UserRepository userRepository,
+            StationRepository stationRepository,
+            StationManagerRepository stationManagerRepository
+    ) {
         this.userRepository = userRepository;
+        this.stationRepository = stationRepository;
+        this.stationManagerRepository = stationManagerRepository;
     }
 
     @Transactional
@@ -33,7 +56,8 @@ public class UserService {
                 .email(email)
                 .nationalId(trimToNull(userDTO.getNationalId()))
                 .phoneNumber(trimToNull(userDTO.getPhoneNumber()))
-                .role("CUSTOMER")
+                .role(ROLE_CUSTOMER)
+                .status(STATUS_ACTIVE)
                 .walletBalance(BigDecimal.ZERO)
                 .createdAt(LocalDateTime.now())
                 .isDeleted(false)
@@ -87,8 +111,137 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Card not found"));
     }
 
+    @Transactional
+    public UserDTO.ManagerResponse createOrPromoteManager(Integer adminId, UserDTO.ManagerRequest request) {
+        validateAdmin(adminId);
+        validateManagerRequest(request);
+
+        Station station = stationRepository.findByStationIdAndIsDeletedFalse(request.getStationId())
+                .orElseThrow(() -> new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Không tìm thấy trạm."));
+
+        String mode = normalize(request.getMode());
+        User manager = MODE_PROMOTE.equals(mode)
+                ? promoteExistingUser(request.getExistingUserId())
+                : createNewManager(request);
+
+        if (stationManagerRepository.existsByManagerUserIdAndStationStationId(manager.getUserId(), station.getStationId())) {
+            throw new UserManagementException(HttpStatus.CONFLICT, "Lỗi: Manager đã được gán cho trạm này.");
+        }
+
+        stationManagerRepository.save(StationManager.builder()
+                .manager(manager)
+                .station(station)
+                .build());
+
+        return new UserDTO.ManagerResponse(
+                manager.getUserId(),
+                manager.getUsername(),
+                manager.getFullName(),
+                manager.getEmail(),
+                manager.getRole(),
+                manager.getStatus(),
+                station.getStationId(),
+                station.getName(),
+                MODE_PROMOTE.equals(mode) ? "Nâng quyền Manager thành công." : "Tạo Manager thành công."
+        );
+    }
+
+    private void validateAdmin(Integer adminId) {
+        if (adminId == null) {
+            throw new UserManagementException(HttpStatus.FORBIDDEN, "Lỗi: Thiếu adminId.");
+        }
+
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new UserManagementException(HttpStatus.FORBIDDEN, "Lỗi: Không tìm thấy Admin."));
+
+        if (!ROLE_ADMIN.equalsIgnoreCase(admin.getRole())) {
+            throw new UserManagementException(HttpStatus.FORBIDDEN, "Lỗi: Bạn không có quyền Admin.");
+        }
+    }
+
+    private void validateManagerRequest(UserDTO.ManagerRequest request) {
+        if (request == null) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu dữ liệu yêu cầu.");
+        }
+        if (isBlank(request.getMode())) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu mode CREATE hoặc PROMOTE.");
+        }
+        if (!MODE_CREATE.equals(normalize(request.getMode())) && !MODE_PROMOTE.equals(normalize(request.getMode()))) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: mode chỉ được là CREATE hoặc PROMOTE.");
+        }
+        if (request.getStationId() == null) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu stationId.");
+        }
+    }
+
+    private User promoteExistingUser(Integer existingUserId) {
+        if (existingUserId == null) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu existingUserId.");
+        }
+
+        User user = userRepository.findById(existingUserId)
+                .orElseThrow(() -> new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Không tìm thấy người dùng."));
+
+        user.setRole(ROLE_MANAGER);
+        user.setStatus(STATUS_ACTIVE);
+        return userRepository.save(user);
+    }
+
+    private User createNewManager(UserDTO.ManagerRequest request) {
+        validateCreateManagerFields(request);
+        validateUniqueManagerFields(request);
+
+        User manager = User.builder()
+                .username(request.getUsername().trim())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName().trim())
+                .email(normalizeEmail(request.getEmail()))
+                .nationalId(trimToNull(request.getNationalId()))
+                .phoneNumber(trimToNull(request.getPhoneNumber()))
+                .role(ROLE_MANAGER)
+                .status(STATUS_ACTIVE)
+                .walletBalance(BigDecimal.ZERO)
+                .createdAt(LocalDateTime.now())
+                .isDeleted(false)
+                .build();
+
+        return userRepository.save(manager);
+    }
+
+    private void validateCreateManagerFields(UserDTO.ManagerRequest request) {
+        if (isBlank(request.getUsername())) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu username.");
+        }
+        if (isBlank(request.getPassword())) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu password.");
+        }
+        if (isBlank(request.getFullName())) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu fullName.");
+        }
+        if (isBlank(request.getEmail())) {
+            throw new UserManagementException(HttpStatus.BAD_REQUEST, "Lỗi: Thiếu email.");
+        }
+    }
+
+    private void validateUniqueManagerFields(UserDTO.ManagerRequest request) {
+        if (userRepository.existsByUsername(request.getUsername().trim())) {
+            throw new UserManagementException(HttpStatus.CONFLICT, "Lỗi: Username đã tồn tại.");
+        }
+        if (userRepository.existsByEmail(normalizeEmail(request.getEmail()))) {
+            throw new UserManagementException(HttpStatus.CONFLICT, "Lỗi: Email đã tồn tại.");
+        }
+        if (!isBlank(request.getNationalId()) && userRepository.existsByNationalId(request.getNationalId().trim())) {
+            throw new UserManagementException(HttpStatus.CONFLICT, "Lỗi: CCCD đã tồn tại.");
+        }
+        if (!isBlank(request.getPhoneNumber()) && userRepository.existsByPhoneNumber(request.getPhoneNumber().trim())) {
+            throw new UserManagementException(HttpStatus.CONFLICT, "Lỗi: Số điện thoại đã tồn tại.");
+        }
+    }
+
     private boolean passwordMatches(String rawPassword, String passwordHash) {
-        return passwordHash.equals(hashPassword(rawPassword)) || passwordHash.equals(rawPassword);
+        return passwordHash.equals(hashPassword(rawPassword))
+                || passwordEncoder.matches(rawPassword, passwordHash)
+                || passwordHash.equals(rawPassword);
     }
 
     private String hashPassword(String rawPassword) {
@@ -119,6 +272,14 @@ public class UserService {
         return value.trim();
     }
 
+    private String normalize(String value) {
+        return value == null ? null : value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
     private UserDTO.UserResponse toResponse(User user) {
         return UserDTO.UserResponse.builder()
                 .userId(user.getUserId())
@@ -128,6 +289,7 @@ public class UserService {
                 .nationalId(user.getNationalId())
                 .phoneNumber(user.getPhoneNumber())
                 .role(user.getRole())
+                .status(user.getStatus())
                 .walletBalance(user.getWalletBalance())
                 .build();
     }
