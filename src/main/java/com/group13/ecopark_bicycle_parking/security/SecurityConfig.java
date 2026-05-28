@@ -21,21 +21,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Tắt chống giả mạo request (vì ta dùng Token rồi)
-                .cors(cors -> cors.configure(http)) // Mở CORS cho Frontend gọi vào
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configure(http))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/apiv1/auth/**").permitAll() // MỞ TOANG cửa cho API Đăng nhập/Đăng ký
-                        .anyRequest().authenticated() // CÁC API KHÁC (Thuê xe, Nạp tiền...) BẮT BUỘC PHẢI CÓ TOKEN
+                        .requestMatchers("/apiv1/auth/**").permitAll()
+                        .requestMatchers("/api/statistics/**").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Chế độ không nhớ (Stateless)
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Cài trạm kiểm soát JWT lên tuyến đầu
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // Khai báo một danh sách User rỗng để chặn Spring Boot tự động tạo mật khẩu mặc định
         return new InMemoryUserDetailsManager();
     }
 }
