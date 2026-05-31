@@ -50,15 +50,18 @@ public class RentalService {
             throw new RuntimeException("Lỗi: Số dư ví không đủ. Cần tối thiểu " + depositAmount + " điểm để tạm ứng.");
         }
 
+    // 4.5 Xác định mức giảm giá
+        int appliedDiscount = user.isResident() ? 40 : 0; // Cư dân giảm 40%, khách vãng lai 0%
+
         // 5. Tạo chuyến đi (Rental) lưu vào DB
         Rental rental = Rental.builder()
                 .user(user)
                 .bike(bike)
-                .startStation(bike.getStation()) // Lấy bãi hiện tại của xe làm bãi xuất phát
+                .startStation(bike.getStation())
                 .startTime(LocalDateTime.now())
                 .status("ACTIVE")
                 .penaltyFee(BigDecimal.ZERO)
-                .discount(0) // Mặc định 0, nếu là cư dân có thể set 40 ở đây
+                .discount(appliedDiscount) // ĐÃ CẬP NHẬT: Nhúng biến giảm giá vào đây
                 .build();
         rental = rentalRepository.save(rental);
 
@@ -116,12 +119,17 @@ public class RentalService {
                 .transactionType("RENTAL_DEPOSIT").build();
         walletTransactionRepository.save(tx);
 
+        // Xác định mức giảm giá
+        int appliedDiscount = user.isResident() ? 40 : 0;
+
         // Tạo hóa đơn CHỜ (RESERVED)
         Rental rental = Rental.builder()
                 .user(user).bike(bike).startStation(bike.getStation())
-                .reservedAt(LocalDateTime.now()) // Ghi nhận giờ đặt
-                .status("RESERVED")              // Trạng thái là ĐÃ ĐẶT
-                .penaltyFee(BigDecimal.ZERO).discount(0).build();
+                .reservedAt(LocalDateTime.now())
+                .status("RESERVED")
+                .penaltyFee(BigDecimal.ZERO)
+                .discount(appliedDiscount) // ĐÃ CẬP NHẬT
+                .build();
         rental = rentalRepository.save(rental);
 
         // Khóa xe lại không cho người khác thuê

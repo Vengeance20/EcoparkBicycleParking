@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/statistics")
+@RequestMapping("/apiv1/statistics")
 public class StatisticsController {
 
     private final StatisticsService statisticsService;

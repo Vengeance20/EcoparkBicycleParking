@@ -24,9 +24,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configure(http))
                 .authorizeHttpRequests(auth -> auth
+                        // 1. MỞ CỬA CHO GIAO DIỆN WEB (Tất cả các file HTML và thư mục con)
+                        .requestMatchers("/*.html", "/user-web/**", "/manager-web/**", "/admin-web/**", "/assets/**").permitAll()
+
+                        // 2. MỞ CỬA CHO CÁC API KHÔNG CẦN ĐĂNG NHẬP
                         .requestMatchers("/apiv1/auth/**").permitAll()
                         .requestMatchers("/apiv1/admin/users/managers").permitAll()
                         .requestMatchers("/api/statistics/**").permitAll()
+
+                        // 3. CÁC API CÒN LẠI BẮT BUỘC PHẢI CÓ TOKEN
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

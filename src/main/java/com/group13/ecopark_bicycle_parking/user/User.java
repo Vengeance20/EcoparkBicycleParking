@@ -21,7 +21,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
     private String fullName;
@@ -36,6 +36,10 @@ public class User {
     private String phoneNumber;
 
     private String role;
+
+    // Thêm trường này vào dưới các thông tin khác trong User.java
+    @Column(name = "is_resident", nullable = false)
+    private boolean isResident = false; // Mặc định khách mới đăng ký không phải là cư dân
 
     private String status;
 
