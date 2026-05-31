@@ -22,12 +22,19 @@ public class UserService {
     @Transactional
     public UserDTO.UserResponse register(UserDTO.RegisterRequest userDTO) {
         String email = normalizeEmail(userDTO.getEmail());
+        String username = userDTO.getUsername().trim();
+
+        // 🔴 THÊM 4 DÒNG NÀY VÀO ĐỂ KIỂM TRA TRÙNG USERNAME
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại!");
+        }
+
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email taken");
+            throw new IllegalArgumentException("Email đã tồn tại!");
         }
 
         User user = User.builder()
-                .username(userDTO.getUsername().trim())
+                .username(username) // Sử dụng biến đã trim sẵn ở trên
                 .passwordHash(hashPassword(userDTO.getPassword()))
                 .fullName(trimToNull(userDTO.getFullName()))
                 .email(email)

@@ -6,6 +6,9 @@ import com.group13.ecopark_bicycle_parking.station.StationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class BikeService {
 
@@ -24,6 +27,17 @@ public class BikeService {
         this.stationRepository = stationRepository;
     }
 
+    // ==========================================
+    // HÀM MỚI THÊM: DÙNG CHO FRONTEND KHÁCH HÀNG
+    // ==========================================
+    public List<BikeDTO.Response> getAllVehicles() {
+        // Lấy tất cả xe chưa bị xóa (isDeleted = false)
+        return bikeRepository.findAll().stream()
+                .filter(bike -> !bike.isDeleted()) 
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     // Lấy ID bãi xe mà Manager được phân công trực
     private Integer getAssignedStationId(Integer managerId) {
         return stationManagerRepository.findByManager_UserId(managerId)
@@ -36,8 +50,9 @@ public class BikeService {
     public BikeDTO.Response addVehicle(BikeDTO.CreateRequest request, Integer managerId) {
         Integer stationId = getAssignedStationId(managerId);
 
-        if (bikeRepository.isBikeInStation(request.getBikeCode().trim(), stationId)) {
-            throw new IllegalStateException("Mã xe hoặc mã định danh đã tồn tại trong trạm của bạn!");
+        // Giả sử ông đã thêm method này vào Repository
+        if (bikeRepository.findByBikeCode(request.getBikeCode().trim()).isPresent()) {
+            throw new IllegalStateException("Mã xe đã tồn tại trong hệ thống!");
         }
 
         BikeCategory category = categoryRepository.findById(request.getCategoryId())
@@ -63,7 +78,7 @@ public class BikeService {
         Integer stationId = getAssignedStationId(managerId);
 
         Bike bike = bikeRepository.findBikeForManager(vehicleId, stationId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe hoặc xe nằm ngoài phạm vi quản lý!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe!"));
 
         BikeCategory category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Loại xe không tồn tại!"));
@@ -80,13 +95,9 @@ public class BikeService {
         Integer stationId = getAssignedStationId(managerId);
 
         Bike bike = bikeRepository.findBikeForManager(vehicleId, stationId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe hoặc xe nằm ngoài phạm vi quản lý!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe!"));
 
         String status = request.getStatus().trim().toUpperCase();
-        if (!status.equals("AVAILABLE") && !status.equals("MAINTENANCE") && !status.equals("INACTIVE")) {
-            throw new IllegalArgumentException("Trạng thái xe không hợp lệ!");
-        }
-
         bike.setStatus(status);
         return toResponse(bikeRepository.save(bike));
     }
@@ -97,25 +108,34 @@ public class BikeService {
         Integer stationId = getAssignedStationId(managerId);
 
         Bike bike = bikeRepository.findBikeForManager(vehicleId, stationId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe hoặc xe nằm ngoài phạm vi quản lý!"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe!"));
 
         if ("IN_USE".equals(bike.getStatus())) {
-            throw new IllegalStateException("Không thể xóa xe đang trong trạng thái được thuê di chuyển!");
+            throw new IllegalStateException("Xe đang được thuê!");
         }
 
         bike.setDeleted(true);
-        bike.setStation(null); // Giải phóng xe khỏi bãi
+        bike.setStation(null); 
         bikeRepository.save(bike);
     }
 
-    // Hàm chuyển đổi thủ công để tránh lỗi của Lombok @Builder
+    // Hàm map dữ liệu chuẩn để Frontend không bị báo lỗi undefined
     private BikeDTO.Response toResponse(Bike bike) {
         BikeDTO.Response res = new BikeDTO.Response();
         res.setBikeId(bike.getBikeId());
         res.setBikeCode(bike.getBikeCode());
         res.setStatus(bike.getStatus());
-        res.setStationId(bike.getStation() != null ? bike.getStation().getStationId() : null);
-        res.setCategoryId(bike.getCategory() != null ? bike.getCategory().getCategoryId() : null);
+        
+        // Trả về tên loại xe để Frontend hiển thị cho đẹp
+        if (bike.getCategory() != null) {
+            res.setCategoryId(bike.getCategory().getCategoryId());
+            // Nếu DTO của ông có trường bikeType, hãy set nó ở đây
+            // res.setBikeType(bike.getCategory().getCategoryName()); 
+        }
+        
+        if (bike.getStation() != null) {
+            res.setStationId(bike.getStation().getStationId());
+        }
         return res;
     }
 }

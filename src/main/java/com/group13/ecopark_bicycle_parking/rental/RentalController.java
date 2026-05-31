@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/apiv1/rentals")
+@CrossOrigin(origins = "*") // Cho phép Frontend gọi vào
 public class RentalController {
 
     @Autowired

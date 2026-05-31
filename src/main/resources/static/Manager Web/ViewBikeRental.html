@@ -19,13 +19,8 @@
         
         /* Hiệu ứng nhấp nháy cho xe đang hoạt động */
         .live-dot {
-            width: 8px;
-            height: 8px;
-            background: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            animation: pulse 1.5s infinite;
+            width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
+            display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
@@ -44,38 +39,39 @@
         <div class="flex items-center gap-4">
             <div class="text-right hidden md:block">
                 <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Server Status</p>
-                <p class="text-xs font-bold text-green-500 flex items-center justify-end"><span class="live-dot"></span> Đang kết nối</p>
+                <p class="text-xs font-bold text-green-500 flex items-center justify-end"><span class="live-dot"></span> Đang kết nối DB</p>
             </div>
             <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold">M</div>
         </div>
     </nav>
 
     <main class="max-w-6xl mx-auto p-6">
+        <!-- THỐNG KÊ TỔNG QUAN -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <div class="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Đang được thuê</p>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Đang được thuê / Đặt trước</p>
                 <div class="flex items-end gap-2">
-                    <span class="text-3xl font-black text-slate-800">42</span>
-                    <span class="text-xs text-green-500 font-bold mb-1"><i class="fas fa-arrow-up"></i> 12%</span>
+                    <span id="statInUse" class="text-3xl font-black text-slate-800">0</span>
                 </div>
             </div>
             <div class="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
                 <p class="text-xs font-bold text-gray-400 uppercase mb-2">Xe sẵn sàng</p>
-                <span class="text-3xl font-black text-slate-800">128</span>
+                <span id="statAvailable" class="text-3xl font-black text-slate-800">0</span>
             </div>
             <div class="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Doanh thu tạm tính</p>
-                <span class="text-3xl font-black text-green-600">3.2M P</span>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Tổng số phương tiện</p>
+                <span id="statTotal" class="text-3xl font-black text-green-600">0</span>
             </div>
         </div>
 
+        <!-- BỘ LỌC & BẢNG CHI TIẾT -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <h2 class="text-xl font-bold text-slate-800">Trạng thái thuê chi tiết</h2>
+            <h2 class="text-xl font-bold text-slate-800">Trạng thái xe chi tiết</h2>
             
             <div class="relative bg-gray-200/50 p-1 rounded-2xl flex" id="filterGroup">
                 <div id="status-indicator"></div>
-                <button onclick="filterStatus(this, 'in-use')" class="status-btn px-6 py-2.5 rounded-xl text-xs font-bold text-white">Đang thuê</button>
-                <button onclick="filterStatus(this, 'pending')" class="status-btn px-6 py-2.5 rounded-xl text-xs font-bold text-gray-500">Chờ thanh toán</button>
+                <button onclick="filterStatus(this, 'IN_USE')" class="status-btn px-6 py-2.5 rounded-xl text-xs font-bold text-white">Đang thuê</button>
+                <button onclick="filterStatus(this, 'RESERVED')" class="status-btn px-6 py-2.5 rounded-xl text-xs font-bold text-gray-500">Đặt trước</button>
             </div>
         </div>
 
@@ -84,32 +80,56 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
-                            <th class="px-8 py-5">Người thuê</th>
-                            <th class="px-8 py-5">Mã xe / Trạm</th>
-                            <th class="px-8 py-5">Bắt đầu</th>
-                            <th class="px-8 py-5">Thời gian</th>
-                            <th class="px-8 py-5 text-right">Tạm tính</th>
+                            <th class="px-8 py-5">Mã xe</th>
+                            <th class="px-8 py-5">Loại xe</th>
+                            <th class="px-8 py-5">Trạm hiện tại</th>
+                            <th class="px-8 py-5">Trạng thái</th>
                         </tr>
                     </thead>
                     <tbody id="statusTableBody" class="divide-y divide-gray-50">
-                        </tbody>
+                        <tr><td colspan="4" class="text-center py-10 text-gray-400 font-bold">Đang tải dữ liệu từ Database...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </main>
 
     <script>
-        const rentalData = {
-            'in-use': [
-                { user: 'Nguyễn Văn A', bike: 'EB-101', station: 'Rừng Cọ', start: '14:20', duration: '45 phút', cost: '15.000 P' },
-                { user: 'Trần Thị B', bike: 'EB-302', station: 'West Bay', start: '14:55', duration: '10 phút', cost: '5.000 P' },
-                { user: 'Lê Văn C', bike: 'MB-005', station: 'Aquabay', start: '14:10', duration: '55 phút', cost: '12.000 P' }
-            ],
-            'pending': [
-                { user: 'Phạm Minh D', bike: 'EB-909', station: 'Swan Lake', start: '13:00', duration: '120 phút', cost: '40.000 P' }
-            ]
-        };
+        const API_BASE = "http://localhost:8080/apiv1";
+        let allBikes = []; // Lưu trữ data lấy từ DB
 
+        // ==========================================
+        // 1. TẢI DỮ LIỆU TỪ DATABASE
+        // ==========================================
+        async function loadDashboardData() {
+            try {
+                const res = await fetch(`${API_BASE}/vehicles/public`);
+                if(res.ok) {
+                    allBikes = await res.json();
+                    
+                    // Cập nhật thống kê
+                    let inUse = 0, available = 0;
+                    allBikes.forEach(bike => {
+                        if(bike.status === 'IN_USE' || bike.status === 'RESERVED') inUse++;
+                        else if(bike.status === 'AVAILABLE') available++;
+                    });
+
+                    document.getElementById('statInUse').innerText = inUse;
+                    document.getElementById('statAvailable').innerText = available;
+                    document.getElementById('statTotal').innerText = allBikes.length;
+
+                    // Mặc định hiển thị xe đang thuê khi tải trang xong
+                    const defaultBtn = document.querySelector('.status-btn');
+                    filterStatus(defaultBtn, 'IN_USE');
+                }
+            } catch (e) {
+                document.getElementById('statusTableBody').innerHTML = `<tr><td colspan="4" class="text-center py-10 text-red-500 font-bold">Lỗi kết nối Server!</td></tr>`;
+            }
+        }
+
+        // ==========================================
+        // 2. LỌC VÀ HIỂN THỊ BẢNG
+        // ==========================================
         function filterStatus(el, status) {
             // Slide Bar chuyển động
             const indicator = document.getElementById('status-indicator');
@@ -125,41 +145,50 @@
             el.classList.add('text-white');
             el.classList.remove('text-gray-500');
 
-            renderTable(status);
+            // Lọc dữ liệu xe theo trạng thái
+            const filteredData = allBikes.filter(bike => bike.status === status);
+            renderTable(filteredData, status);
         }
 
-        function renderTable(status) {
+        function renderTable(data, currentStatus) {
             const tbody = document.getElementById('statusTableBody');
-            const data = rentalData[status];
             
-            tbody.innerHTML = data.map(item => `
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-400 font-bold">Không có xe nào ở trạng thái này.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                // Format trạng thái & Trạm
+                let statusBadge = '';
+                let stationName = '---';
+                
+                if(item.status === 'IN_USE') {
+                    statusBadge = `<span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold"><i class="fas fa-bicycle mr-1"></i> Đang chạy</span>`;
+                    stationName = 'Đang di chuyển'; // Xe đang chạy thì station sẽ là null trong DB
+                } 
+                else if(item.status === 'RESERVED') {
+                    statusBadge = `<span class="bg-amber-50 text-amber-600 px-3 py-1 rounded-lg text-[10px] font-bold"><i class="fas fa-clock mr-1"></i> Chờ nhận xe</span>`;
+                    stationName = item.station ? item.station.name : 'Bãi đỗ'; // Tùy cấu trúc DTO trả về
+                }
+
+                // Lấy loại xe
+                const categoryName = item.category ? item.category.name : 'Standard';
+
+                return `
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-8 py-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-[10px] font-bold">
-                                ${item.user.charAt(0)}
-                            </div>
-                            <span class="text-sm font-bold text-slate-700">${item.user}</span>
-                        </div>
+                        <p class="text-sm font-bold text-slate-800">${item.bikeCode}</p>
                     </td>
-                    <td class="px-8 py-5">
-                        <p class="text-sm font-bold text-slate-800">${item.bike}</p>
-                        <p class="text-[10px] text-gray-400">${item.station}</p>
-                    </td>
-                    <td class="px-8 py-5 text-xs text-slate-500">${item.start}</td>
-                    <td class="px-8 py-5">
-                        <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold">
-                            <i class="far fa-clock mr-1"></i> ${item.duration}
-                        </span>
-                    </td>
-                    <td class="px-8 py-5 text-right font-black text-green-600 text-sm">${item.cost}</td>
-                </tr>
-            `).join('');
+                    <td class="px-8 py-5 text-sm text-slate-600">${categoryName}</td>
+                    <td class="px-8 py-5 text-xs text-slate-500">${stationName}</td>
+                    <td class="px-8 py-5">${statusBadge}</td>
+                </tr>`;
+            }).join('');
         }
 
-        window.onload = () => {
-            filterStatus(document.querySelector('.status-btn'), 'in-use');
-        };
+        // Chạy khi mở trang
+        window.onload = loadDashboardData;
     </script>
 </body>
 </html>

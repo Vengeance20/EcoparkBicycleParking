@@ -1,5 +1,6 @@
 package com.group13.ecopark_bicycle_parking.user;
 
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import com.group13.ecopark_bicycle_parking.security.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -67,5 +68,24 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // 🔴 HÀM MỚI: Bắt lỗi Validate (@NotBlank, @Size, @Email...) trả về message tiếng Việt
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        return ResponseEntity.badRequest().body(errorMessage);
+    }
+
+     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException ex) {
+        String message = "Lỗi cơ sở dữ liệu!";
+        // Kiểm tra xem là trùng Username hay Email
+        if (ex.getMessage().contains("username")) {
+            message = "Tên đăng nhập đã tồn tại!";
+        } else if (ex.getMessage().contains("email")) {
+            message = "Email đã tồn tại!";
+        }
+        return ResponseEntity.badRequest().body(message);
     }
 }

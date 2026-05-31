@@ -2,128 +2,282 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecopark Bike - Thuê Xe</title>
+    <title>Bicycle Rental</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .bike-card { transition: all 0.3s ease; }
-        .renting-active { border: 2px solid #10b981; background: #f0fdf4; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
+        .card { transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Toast CSS */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            padding: 16px 32px; border-radius: 50px; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: all 0.5s ease; opacity: 0; z-index: 1000;
+        }
+        #toast.show { bottom: 40px; opacity: 1; }
+        .toast-success { background: #1e293b; color: white; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     </style>
 </head>
-<body class="bg-slate-50">
-
-    <nav class="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-50">
-        <span class="text-xl font-bold text-green-600">ECOPARK BIKE</span>
-        <div id="status-bar" class="text-[10px] font-bold text-slate-400">ĐANG KẾT NỐI...</div>
-    </nav>
-
-    <main class="max-w-6xl mx-auto p-6">
-        <div id="bike-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<body class="p-4 md:p-10">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-black text-indigo-700">ECOPARK <span class="text-slate-800">BIKES</span></h1>
+            <div class="flex gap-2">
+                <button onclick="switchTab('bikes')" id="btn-bikes" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm">THUÊ XE</button>
+                <button onclick="switchTab('history')" id="btn-history" class="bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm">LỊCH SỬ</button>
             </div>
-    </main>
+        </header>
 
-    <script>
-        let allBikes = [];
-        let activeRentals = {}; 
-        const API_URL = 'http://localhost:8080/api/v1/bicycles';
+        <div id="tab-bikes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-        async function loadBikes() {
-            try {
-                const res = await fetch(API_URL);
-                allBikes = await res.json();
-                document.getElementById('status-bar').innerText = "HỆ THỐNG ONLINE";
-                render();
-            } catch (e) {
-                document.getElementById('status-bar').innerText = "LỖI KẾT NỐI";
-            }
+        <div id="tab-history" class="hidden">
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+                <h2 class="text-xl font-black text-slate-800 mb-6">LỊCH SỬ CHUYẾN ĐI</h2>
+                <div id="history-container" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast HTML -->
+    <div id="toast">
+        <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center"><i id="faIcon" class="fas"></i></div>
+        <div>
+            <p id="toastTitle" class="font-bold"></p>
+            <p id="toastDesc" class="text-xs opacity-80"></p>
+        </div>
+    </div>
+
+<script>
+    const API = "http://localhost:8080/apiv1";
+    
+    // 🔴 ĐÃ XÓA DÒNG "const USER_ID = 1" ĐI 
+    // Thay bằng hàm lấy ID động của user đang đăng nhập
+    function getCurrentUserId() {
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        if (!userData.userId) {
+            showToast('error', 'Lỗi xác thực', 'Bạn chưa đăng nhập! Đang chuyển hướng...');
+            setTimeout(() => { window.location.href = '../RegisterLoginPage.html'; }, 1500);
+            return null;
         }
+        return userData.userId;
+    }
 
-        async function toggleRental(id) {
-            // Tìm xe dựa trên thuộc tính bike_id từ Backend
-            const bike = allBikes.find(b => b.bike_id == id);
-            if (!bike) return;
+    // ==========================================
+    // TOAST HELPER
+    // ==========================================
+    function showToast(type, title, desc) {
+        const toast = document.getElementById('toast');
+        toast.className = `show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+        document.getElementById('toastIcon').className = `w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-green-500' : 'bg-red-500 text-white'}`;
+        document.getElementById('faIcon').className = `fas ${type === 'success' ? 'fa-check' : 'fa-exclamation-triangle'}`;
+        document.getElementById('toastTitle').innerText = title;
+        document.getElementById('toastDesc').innerText = desc;
+        setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
 
-            if (activeRentals[id]) {
-                if (confirm("Bạn muốn trả xe?")) {
-                    bike.status = 'AVAILABLE';
-                    const res = await fetch(`${API_URL}/${id}`, {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(bike)
-                    });
-                    if (res.ok) {
-                        clearInterval(activeRentals[id].interval);
-                        delete activeRentals[id];
-                        loadBikes();
-                    }
+    // ==========================================
+    // TAB SWITCH
+    // ==========================================
+    function switchTab(tab) {
+        document.getElementById('tab-bikes').classList.toggle('hidden', tab !== 'bikes');
+        document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
+        
+        document.getElementById('btn-bikes').className = tab === 'bikes' 
+            ? 'bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm' 
+            : 'bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm';
+            
+        document.getElementById('btn-history').className = tab === 'history' 
+            ? 'bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm' 
+            : 'bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm';
+
+        if(tab === 'bikes') loadVehicles();
+        if(tab === 'history') loadHistory();
+    }
+
+    // ==========================================
+    // 1. LOAD VẬN TẢI
+    // ==========================================
+    async function loadVehicles() {
+        const container = document.getElementById('tab-bikes');
+        try {
+            const res = await fetch(`${API}/vehicles/public`);
+            const bikes = await res.json();
+            
+            container.innerHTML = bikes.map(b => {
+                const status = b.status; 
+                let buttons = '';
+
+                if (status === 'MAINTENANCE') {
+                    buttons = `<button disabled class="w-full bg-slate-200 text-slate-400 py-3 rounded-xl font-bold text-xs cursor-not-allowed">ĐANG BẢO TRÌ</button>`;
+                } else if (status === 'AVAILABLE') {
+                    buttons = `
+                        <button onclick="handleAction('rent', '${b.bikeCode}')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs mb-2 hover:bg-black transition-all">THUÊ NGAY</button>
+                        <button onclick="handleAction('reserve', '${b.bikeCode}')" class="w-full bg-indigo-50 text-indigo-600 py-3 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all">ĐẶT TRƯỚC (15P)</button>
+                    `;
+                } else if (status === 'RESERVED') {
+                    buttons = `<button onclick="handleAction('unlock', '${b.bikeCode}')" class="w-full bg-amber-500 text-white py-3 rounded-xl font-bold text-xs hover:bg-amber-600 transition-all">MỞ KHÓA XE</button>`;
+                } else if (status === 'IN_USE') {
+                    buttons = `<button onclick="handleReturn(${b.bikeId})" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold text-xs hover:bg-red-600 transition-all">TRẢ XE (RETURN)</button>`;
                 }
-            } else {
-                if (confirm(`Thuê xe ${bike.bikeCode || bike.bike_code}?`)) {
-                    bike.status = 'IN_USE'; // Trạng thái đang dùng
-                    const res = await fetch(`${API_URL}/${id}`, {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(bike)
-                    });
-                    if (res.ok) {
-                        activeRentals[id] = {
-                            start: Date.now(),
-                            interval: setInterval(() => updateTimer(id), 1000)
-                        };
-                        render();
-                    }
-                }
-            }
-        }
-
-        function updateTimer(id) {
-            const diff = Date.now() - activeRentals[id].start;
-            const s = Math.floor((diff / 1000) % 60);
-            const m = Math.floor((diff / 60000) % 60);
-            const el = document.getElementById(`timer-${id}`);
-            if (el) el.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        }
-
-        function render() {
-            const grid = document.getElementById('bike-grid');
-            grid.innerHTML = allBikes.map(bike => {
-                // Khớp với tên biến trong Bicycle.java
-                const id = bike.bike_id; 
-                const code = bike.bikeCode || bike.bike_code; 
-                const type = bike.bikeType || bike.bike_type;
-                const status = bike.status;
-                
-                const isRunning = !!activeRentals[id];
-                const available = status === 'AVAILABLE';
 
                 return `
-                <div class="bike-card bg-white p-5 rounded-3xl shadow-sm border ${isRunning ? 'renting-active' : ''}">
-                    <div class="flex justify-between text-[10px] font-bold mb-4">
-                        <span class="text-slate-400">ID: ${id}</span>
-                        <span class="${available ? 'text-green-500' : 'text-red-500'}">${isRunning ? 'ĐANG ĐI' : status}</span>
+                <div class="card bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm ${status === 'MAINTENANCE' ? 'opacity-50' : ''}">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-[10px] font-bold text-slate-400">#${b.bikeCode}</span>
+                        <span class="px-2 py-1 rounded-md text-[9px] font-black ${getStatusClass(status)}">${status}</span>
                     </div>
-                    
-                    <div class="text-center py-4">
-                        ${isRunning ? 
-                            `<div id="timer-${id}" class="text-3xl font-mono font-black text-slate-700">00:00</div>` : 
-                            `<h3 class="text-2xl font-black text-slate-800">${code}</h3>`
-                        }
-                        <p class="text-[10px] text-slate-400 mt-2 uppercase">${type}</p>
-                    </div>
-
-                    <button onclick="toggleRental(${id})" 
-                        ${(!available && !isRunning) ? 'disabled' : ''}
-                        class="w-full mt-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all
-                        ${isRunning ? 'bg-red-500 text-white' : (available ? 'bg-slate-900 text-white hover:bg-green-600' : 'bg-slate-200 text-slate-400')}">
-                        ${isRunning ? 'Trả xe' : (available ? 'Thuê xe' : 'Bận')}
-                    </button>
+                    <h3 class="text-xl font-black text-slate-800 mb-6">${b.bikeCode}</h3>
+                    <div class="space-y-2">${buttons}</div>
                 </div>`;
             }).join('');
+        } catch (e) { 
+            container.innerHTML = "<p class='text-red-500 font-bold'>Lỗi kết nối server!</p>"; 
+        }
+    }
+
+    // ==========================================
+    // 2. RENT / RESERVE / UNLOCK (ĐÃ SỬA LẤY USER ID ĐỘNG)
+    // ==========================================
+    async function handleAction(endpoint, bikeCode) {
+        const userId = getCurrentUserId(); // LẤY ID CỦA USER ĐANG ĐĂNG NHẬP
+        if (!userId) return;
+
+        try {
+            const res = await fetch(`${API}/rentals/${endpoint}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId: userId, bikeCode: bikeCode }) // GỬI ĐÚNG USER ID
+            });
+
+            if(res.ok) {
+                if(endpoint === 'unlock') {
+                    const msg = await res.text();
+                    showToast('success', 'Thành công', msg);
+                } else {
+                    const data = await res.json();
+                    if(data.rentalId) localStorage.setItem('active_rental_id', data.rentalId);
+                    showToast('success', 'Thành công', data.message || `Mã chuyến đi: ${data.rentalId}`);
+                }
+                loadVehicles();
+            } else {
+                const errMsg = await res.text();
+                showToast('error', 'Thao tác thất bại', errMsg);
+            }
+        } catch (e) { 
+            showToast('error', 'Lỗi hệ thống', 'Không thể kết nối đến server!'); 
+        }
+    }
+
+    // ==========================================
+    // 3. RETURN BIKE (ĐÃ SỬA LẤY USER ID ĐỘNG)
+    // ==========================================
+    async function handleReturn(bikeId) {
+        const userId = getCurrentUserId(); // LẤY ID CỦA USER ĐANG ĐĂNG NHẬP
+        if (!userId) return;
+
+        let rId = localStorage.getItem('active_rental_id');
+
+        if(!rId) {
+            try {
+                const hRes = await fetch(`${API}/rentals/history/${userId}`); // DÙNG USER ID ĐỘNG
+                const history = await hRes.json();
+                const active = history.find(h => h.status === 'ACTIVE' || h.status === 'IN_USE');
+                if(active) rId = active.rentalId;
+            } catch (e) {}
         }
 
-        window.onload = loadBikes;
-    </script>
+        if(!rId) return showToast('error', 'Lỗi', 'Không tìm thấy ID chuyến đi để trả xe!');
+
+        const stationInput = prompt("Nhập ID trạm trả xe (Ví dụ: 1, 2, 3...):", "1");
+        if(stationInput === null) return;
+        const endStationId = parseInt(stationInput);
+        if(isNaN(endStationId)) return showToast('error', 'Lỗi nhập', 'ID trạm phải là số!');
+
+        try {
+            const res = await fetch(`${API}/rentals/return`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    rentalId: parseInt(rId), 
+                    endStationId: endStationId 
+                })
+            });
+
+            if(res.ok) {
+                const data = await res.json();
+                localStorage.removeItem('active_rental_id');
+                
+                const desc = `Thời gian: ${data.durationMinutes} phút | Phí: ${data.totalFee}đ | Hoàn tiền: ${data.refundAmount}đ`;
+                showToast('success', 'Trả xe thành công', desc);
+                loadVehicles();
+            } else {
+                const errMsg = await res.text();
+                showToast('error', 'Trả xe thất bại', errMsg);
+            }
+        } catch (e) { 
+            showToast('error', 'Lỗi hệ thống', 'Lỗi kết nối khi trả xe!'); 
+        }
+    }
+
+    // ==========================================
+    // 4. LỊCH SỬ (HISTORY - ĐÃ SỬA LẤY USER ID ĐỘNG)
+    // ==========================================
+    async function loadHistory() {
+        const userId = getCurrentUserId(); // LẤY ID CỦA USER ĐANG ĐĂNG NHẬP
+        if (!userId) return;
+
+        const container = document.getElementById('history-container');
+        container.innerHTML = "<p class='text-slate-400 text-center py-4'>Đang tải dữ liệu...</p>";
+        try {
+            const res = await fetch(`${API}/rentals/history/${userId}`); // DÙNG USER ID ĐỘNG
+            const data = await res.json();
+            
+            if(data.length === 0) {
+                container.innerHTML = "<p class='text-slate-400 text-center py-4'>Bạn chưa có chuyến đi nào.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(h => {
+                const start = h.startTime ? new Date(h.startTime).toLocaleString('vi-VN') : '---';
+                const end = h.endTime ? new Date(h.endTime).toLocaleString('vi-VN') : 'Đang thuê...';
+                
+                let penaltyHtml = '';
+                if(h.penaltyFee && h.penaltyFee > 0) {
+                    penaltyHtml = `<p class="text-[9px] text-red-500 font-bold">(Phạt: ${h.penaltyFee}đ)</p>`;
+                }
+
+                return `
+                <div class="flex justify-between items-center p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-all">
+                    <div>
+                        <p class="font-black text-slate-800 text-sm uppercase">${h.bikeCode}</p>
+                        <p class="text-[10px] text-slate-500 font-bold">${h.startStationName || 'Xuất phát'} → ${h.endStationName || '---'}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Bắt đầu: ${start}</p>
+                        <p class="text-[9px] text-slate-400">Kết thúc: ${end}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-indigo-600 text-lg">${h.totalFee || 0}đ</p>
+                        ${penaltyHtml}
+                        <span class="text-[8px] font-black uppercase px-2 py-1 rounded-md ${getStatusClass(h.status)}">${h.status}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (e) { 
+            container.innerHTML = "<p class='text-red-500 font-bold text-center py-4'>Lỗi khi tải lịch sử!</p>"; 
+        }
+    }
+
+    function getStatusClass(s) {
+        if(s === 'AVAILABLE' || s === 'COMPLETED') return 'bg-emerald-100 text-emerald-600';
+        if(s === 'IN_USE' || s === 'ACTIVE') return 'bg-blue-100 text-blue-600';
+        if(s === 'MAINTENANCE') return 'bg-red-100 text-red-600';
+        if(s === 'RESERVED') return 'bg-amber-100 text-amber-600';
+        return 'bg-slate-100 text-slate-400';
+    }
+
+    window.onload = loadVehicles;
+</script>
 </body>
 </html>

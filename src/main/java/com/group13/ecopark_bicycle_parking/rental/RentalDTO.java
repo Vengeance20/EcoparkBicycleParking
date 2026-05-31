@@ -63,4 +63,3 @@ public class RentalDTO {
         private String message;
     }
 }
-

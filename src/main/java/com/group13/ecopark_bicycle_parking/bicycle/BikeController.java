@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*") 
 @RestController
 @RequestMapping("/apiv1/vehicles")
 public class BikeController {
@@ -91,5 +92,10 @@ public class BikeController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Đã xảy ra sự cố hệ thống!");
         }
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<?> getAllVehicles() {
+        return ResponseEntity.ok(bikeService.getAllVehicles()); // Giả định Service ông có hàm này
     }
 }

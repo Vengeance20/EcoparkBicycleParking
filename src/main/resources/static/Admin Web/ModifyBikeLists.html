@@ -2,225 +2,254 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Ecopark Manager - Chuẩn Backend 100%</title>
+    <title>Ecopark Manager - Frontend Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .modal { display: none; }
         .modal.active { display: flex; }
+        /* Hiệu ứng mượt cho bảng */
+        tr { transition: all 0.2s; }
     </style>
 </head>
 <body class="bg-slate-100 p-6">
     <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-3xl shadow-sm">
+        <div id="corsWarning" class="hidden mb-4 p-4 bg-amber-100 border-l-4 border-amber-500 text-amber-700 text-sm font-bold rounded-r-lg">
+            <i class="fas fa-exclamation-triangle mr-2"></i> 
+            Lưu ý: Nếu không thấy dữ liệu, hãy đảm bảo bạn đã bật Extension "Allow CORS" trên trình duyệt.
+        </div>
+
+        <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
             <div>
-                <h1 class="text-2xl font-black uppercase text-slate-800">Trạm: <span id="labelStation" class="text-green-600">Rừng Cọ</span></h1>
-                <div id="statusBadge" class="mt-2 text-xs font-bold px-3 py-1 rounded-full bg-gray-200 inline-block">Đang tải DB...</div>
+                <h1 class="text-2xl font-black uppercase text-slate-800 tracking-tight">Quản lý phương tiện</h1>
+                <div id="statusBadge" class="mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-slate-200 text-slate-500 inline-block uppercase">
+                    Đang kiểm tra kết nối...
+                </div>
             </div>
-            <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 transition-all">
-                <i class="fas fa-plus"></i> Thêm xe mới
-            </button>
+            <div class="flex gap-3">
+                <button onclick="promptToken()" class="text-slate-400 hover:text-blue-600 text-xs font-bold uppercase transition-colors">
+                    <i class="fas fa-key"></i> Nhập Token
+                </button>
+                <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg flex items-center gap-2 transition-all active:scale-95">
+                    <i class="fas fa-plus"></i> Thêm xe mới
+                </button>
+            </div>
         </div>
 
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="changeStation(this, 1, 'Rừng Cọ')" class="station-btn px-6 py-2 rounded-xl font-bold bg-slate-800 text-white shadow-md">Rừng Cọ (ID:1)</button>
-            <button onclick="changeStation(this, 2, 'West Bay')" class="station-btn px-6 py-2 rounded-xl font-bold bg-white text-slate-500 hover:bg-slate-50">West Bay (ID:2)</button>
-            <button onclick="changeStation(this, 3, 'Aquabay')" class="station-btn px-6 py-2 rounded-xl font-bold bg-white text-slate-500 hover:bg-slate-50">Aquabay (ID:3)</button>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b">
                     <tr>
-                        <th class="px-8 py-4">Mã số (bikeCode)</th>
-                        <th class="px-8 py-4">Loại (bikeType)</th>
-                        <th class="px-8 py-4">Trạng thái (status)</th>
-                        <th class="px-8 py-4 text-right">Thao tác</th>
+                        <th class="px-8 py-5">Mã xe</th>
+                        <th class="px-8 py-5">Phân loại</th>
+                        <th class="px-8 py-5">Trạng thái</th>
+                        <th class="px-8 py-5 text-right">Hành động</th>
                     </tr>
                 </thead>
                 <tbody id="bikeTableBody">
-                    <tr><td colspan="4" class="text-center py-20 text-slate-400 font-bold">Đang tải dữ liệu từ MySQL...</td></tr>
+                    <tr><td colspan="4" class="text-center py-24">
+                        <div class="flex flex-col items-center opacity-30">
+                            <i class="fas fa-sync fa-spin text-3xl mb-4"></i>
+                            <p class="font-bold italic">Đang tải dữ liệu từ localhost:8080...</p>
+                        </div>
+                    </td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div id="bikeModal" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center">
-        <div class="bg-white w-full max-w-md p-8 rounded-[40px] shadow-2xl">
-            <h2 id="modalTitle" class="text-2xl font-black mb-6">Thêm xe mới</h2>
+    <div id="bikeModal" class="modal fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 items-center justify-center">
+        <div class="bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl transform transition-all">
+            <h2 id="modalTitle" class="text-2xl font-black mb-8 text-slate-800">Thêm xe mới</h2>
             <input type="hidden" id="editId">
             
-            <div class="space-y-4">
-                <input type="text" id="inputCode" placeholder="Mã xe (VD: ECO-100)" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500">
-                <select id="inputType" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none">
-                    <option value="SINGLE">Xe đạp đơn (SINGLE)</option>
-                    <option value="DOUBLE">Xe đạp đôi (DOUBLE)</option>
-                </select>
-                <select id="inputStatus" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none">
-                    <option value="AVAILABLE">Sẵn sàng (AVAILABLE)</option>
-                    <option value="IN_USE">Đang sử dụng (IN_USE)</option>
-                    <option value="MAINTENANCE">Bảo trì (MAINTENANCE)</option>
-                </select>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Mã định danh</label>
+                    <input type="text" id="inputCode" placeholder="VD: ECO-2024" class="w-full p-4 bg-slate-100 rounded-2xl font-bold border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Loại phương tiện</label>
+                    <select id="inputCategory" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none cursor-pointer">
+                        <option value="1">Xe đạp đơn</option>
+                        <option value="2">Xe đạp đôi</option>
+                        <option value="3">Xe điện</option>
+                    </select>
+                </div>
+
+                <div id="statusSection" class="hidden">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Trạng thái</label>
+                    <select id="inputStatus" class="w-full p-4 bg-slate-100 rounded-2xl font-bold outline-none text-blue-600">
+                        <option value="AVAILABLE">Sẵn sàng (AVAILABLE)</option>
+                        <option value="MAINTENANCE">Bảo trì (MAINTENANCE)</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Hủy</button>
-                <button onclick="handleSave()" class="flex-1 py-4 bg-green-600 text-white rounded-2xl font-bold shadow-lg hover:bg-green-700 transition-colors">LƯU DATABASE</button>
+            <div class="flex gap-4 mt-10">
+                <button onclick="closeModal()" class="flex-1 py-4 font-black text-slate-400 hover:text-slate-600 uppercase text-xs tracking-widest">Đóng</button>
+                <button onclick="handleSave()" class="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg hover:bg-blue-600 transition-all uppercase text-xs tracking-widest">Lưu Database</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8080/api/v1/bicycles';
-        let allBikes = [];
-        let currentStationId = 1;
+        const API_BASE = 'http://localhost:8080/apiv1/vehicles';
 
-        // 1. TẢI DỮ LIỆU TỪ SPRING BOOT
+        // Tự động hiện cảnh báo nếu mở file trực tiếp
+        if (window.location.protocol === 'file:') {
+            document.getElementById('corsWarning').classList.remove('hidden');
+        }
+
+        function getHeaders() {
+            const token = localStorage.getItem('jwtToken') || "";
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        // Hàm để dán Token nhanh khi test
+        function promptToken() {
+            const t = prompt("Dán JWT Token vào đây (Lấy từ Postman hoặc trang Login):");
+            if (t) {
+                localStorage.setItem('jwtToken', t);
+                loadData();
+            }
+        }
+
+        let allBikes = [];
+
         async function loadData() {
             const badge = document.getElementById('statusBadge');
             try {
-                const res = await fetch(API_BASE);
-                if (!res.ok) throw new Error("Server trả lỗi");
-                allBikes = await res.json();
+                const res = await fetch(API_BASE, { headers: getHeaders() });
                 
-                badge.innerText = "● ĐÃ KẾT NỐI DATABASE";
+                if (res.status === 403) {
+                    badge.innerText = "LỖI 403: THIẾU TOKEN";
+                    badge.className = "mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-red-100 text-red-600 inline-block";
+                    return;
+                }
+
+                allBikes = await res.json();
+                badge.innerText = "● KẾT NỐI DATABASE THÀNH CÔNG";
                 badge.className = "mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-green-100 text-green-600 inline-block";
                 renderTable();
             } catch (err) {
-                badge.innerText = "● LỖI KẾT NỐI BACKEND";
-                badge.className = "mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-red-100 text-red-600 inline-block";
+                console.error(err);
+                badge.innerText = "● LỖI KẾT NỐI (KIỂM TRA CORS/SERVER)";
+                badge.className = "mt-2 text-[10px] font-black px-3 py-1 rounded-full bg-amber-100 text-amber-600 inline-block";
+                
+                // Hiển thị dữ liệu mẫu để bạn vẫn nhìn thấy giao diện khi chưa bật server
+                tbodySamples();
             }
         }
 
-        // 2. VẼ BẢNG
         function renderTable() {
             const tbody = document.getElementById('bikeTableBody');
-            
-            const filtered = allBikes.filter(b => {
-                const sId = b.station?.station_id || b.station?.id;
-                return sId == currentStationId;
-            });
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-slate-400 font-bold italic">Không có xe nào ở trạm này. Hãy thêm mới!</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(b => {
-                const realId = b.bike_id || b.id; 
-                // Xử lý thông minh: lấy bikeCode hoặc bike_code tùy chuẩn Java
-                const code = b.bikeCode || b.bike_code || 'N/A';
-                const type = b.bikeType || b.bike_type || 'N/A';
-                
-                return `
-                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                    <td class="px-8 py-5 font-bold text-slate-700">${code}</td>
-                    <td class="px-8 py-5 text-xs font-bold text-slate-500">${type}</td>
-                    <td class="px-8 py-5 text-xs font-bold ${b.status === 'AVAILABLE' ? 'text-green-500' : 'text-amber-500'}">${b.status}</td>
+            tbody.innerHTML = allBikes.map(b => `
+                <tr class="border-b border-slate-50 hover:bg-blue-50/50">
+                    <td class="px-8 py-5 font-black text-slate-700">${b.bikeCode}</td>
+                    <td class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase">Loại: ${b.categoryId}</td>
+                    <td class="px-8 py-5">
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${b.status === 'AVAILABLE' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                            ${b.status}
+                        </span>
+                    </td>
                     <td class="px-8 py-5 text-right">
-                        <button onclick="openModal('edit', ${realId})" class="text-blue-400 hover:text-blue-600 p-2 transition-colors"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteBike(${realId})" class="text-red-300 hover:text-red-500 p-2 transition-colors"><i class="fas fa-trash"></i></button>
+                        <button onclick="openModal('edit', ${b.bikeId})" class="text-slate-300 hover:text-blue-600 transition-colors mx-1"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteBike(${b.bikeId})" class="text-slate-300 hover:text-red-500 transition-colors mx-1"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
-            `}).join('');
+            `).join('');
         }
 
-        // 3. LƯU (THÊM / SỬA) VÀO DATABASE
+        function tbodySamples() {
+            const tbody = document.getElementById('bikeTableBody');
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-slate-400 font-bold italic">
+                Không thể lấy dữ liệu. Hãy đảm bảo Server đang chạy cổng 8080 và Token hợp lệ.
+            </td></tr>`;
+        }
+
         async function handleSave() {
             const id = document.getElementById('editId').value;
-            
-            // Lấy giá trị từ Form
-            const codeValue = document.getElementById('inputCode').value;
-            const typeValue = document.getElementById('inputType').value;
-            const statusValue = document.getElementById('inputStatus').value;
+            const bikeCode = document.getElementById('inputCode').value;
+            const categoryId = parseInt(document.getElementById('inputCategory').value);
+            const status = document.getElementById('inputStatus').value;
 
-            // CHIÊU BÀI QUAN TRỌNG: Gửi cả 2 kiểu tên biến để lách luật Jackson của Spring Boot
-            const data = {
-                bikeCode: codeValue,
-                bike_code: codeValue,
-                bikeType: typeValue,
-                bike_type: typeValue,
-                status: statusValue
-            };
+            if (!bikeCode) return alert("Mã xe không được để trống!");
 
             try {
                 let url = API_BASE;
                 let method = 'POST';
+                const bodyData = { bikeCode, categoryId };
 
                 if (id) {
-                    // Update xe (Cần ID)
                     url = `${API_BASE}/${id}`;
                     method = 'PUT';
-                } else {
-                    // Tạo xe mới (Yêu cầu phải có managerId=1 theo Backend của bác)
-                    url = `${API_BASE}?managerId=1`;
                 }
 
                 const res = await fetch(url, {
                     method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    headers: getHeaders(),
+                    body: JSON.stringify(bodyData)
                 });
 
                 if (res.ok) {
+                    if (id) {
+                        // Cập nhật trạng thái qua PatchMapping của bạn
+                        await fetch(`${API_BASE}/${id}/status`, {
+                            method: 'PATCH',
+                            headers: getHeaders(),
+                            body: JSON.stringify({ status })
+                        });
+                    }
+                    alert("Thành công!");
                     closeModal();
-                    loadData(); // Tải lại bảng ngay lập tức để thấy xe mới
-                    alert("Đã lưu vào Database thành công!");
-                } else {
-                    alert("Lưu thất bại! Hãy check lại xem User ID=1 có trong DB không.");
-                }
-            } catch (err) {
-                console.error("Lỗi:", err);
-            }
-        }
-
-        // 4. XÓA XE
-        async function deleteBike(id) {
-            if (!confirm("Bạn có chắc chắn muốn xóa xe này khỏi Database?")) return;
-            try {
-                const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-                if (res.ok) {
                     loadData();
                 } else {
-                    alert("Xóa thất bại!");
+                    alert("Lỗi: Không có quyền hoặc sai dữ liệu.");
                 }
             } catch (err) {
-                console.error(err);
+                alert("Lỗi hệ thống: Kiểm tra Extension CORS.");
             }
         }
 
-        // 5. CHUYỂN TRẠM
-        function changeStation(btn, id, name) {
-            currentStationId = id;
-            document.getElementById('labelStation').innerText = name;
-            document.querySelectorAll('.station-btn').forEach(b => {
-                b.className = "station-btn px-6 py-2 rounded-xl font-bold bg-white text-slate-500 hover:bg-slate-50";
-            });
-            btn.className = "station-btn px-6 py-2 rounded-xl font-bold bg-slate-800 text-white shadow-md";
-            renderTable();
+        async function deleteBike(id) {
+            if (!confirm(`Xóa xe ID ${id}?`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                if (res.ok) loadData();
+                else alert("Lỗi xóa: Check Token.");
+            } catch (err) { alert("Lỗi kết nối."); }
         }
 
-        // 6. ĐÓNG MỞ FORM
         function openModal(mode, id = null) {
-            document.getElementById('bikeModal').classList.add('active');
+            const modal = document.getElementById('bikeModal');
+            modal.classList.add('active');
+            document.getElementById('statusSection').classList.toggle('hidden', mode === 'add');
+
             if (mode === 'edit') {
-                const b = allBikes.find(x => x.bike_id == id || x.id == id);
+                const b = allBikes.find(x => x.bikeId == id);
+                if (!b) return;
                 document.getElementById('modalTitle').innerText = "Cập nhật xe";
                 document.getElementById('editId').value = id;
-                document.getElementById('inputCode').value = b.bikeCode || b.bike_code || "";
-                document.getElementById('inputType').value = b.bikeType || b.bike_type || "SINGLE";
-                document.getElementById('inputStatus').value = b.status || "AVAILABLE";
+                document.getElementById('inputCode').value = b.bikeCode;
+                document.getElementById('inputCategory').value = b.categoryId;
+                document.getElementById('inputStatus').value = b.status;
             } else {
                 document.getElementById('modalTitle').innerText = "Thêm xe mới";
                 document.getElementById('editId').value = "";
                 document.getElementById('inputCode').value = "";
-                document.getElementById('inputStatus').value = "AVAILABLE";
             }
         }
 
         function closeModal() { document.getElementById('bikeModal').classList.remove('active'); }
 
-        // Khởi động
         window.onload = loadData;
     </script>
 </body>
