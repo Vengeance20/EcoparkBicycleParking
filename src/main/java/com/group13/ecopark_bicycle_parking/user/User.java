@@ -37,6 +37,8 @@ public class User {
 
     private String role;
 
+    private String status;
+
     @Column(precision = 10, scale = 2)
     private BigDecimal walletBalance;
 
