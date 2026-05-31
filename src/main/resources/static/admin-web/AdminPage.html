@@ -81,10 +81,10 @@
             </a>
 
             <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-3 mt-8 mb-4 block">Dữ liệu & Vận hành</label>
-            <a href="../Manager Web/ViewBikeRental.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <a href="../manager-web/ViewBikeRental.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
                 <i class="fas fa-route w-5 text-center"></i> Lịch sử thuê
             </a>
-            <a href="../Manager Web/ViewRevenueDashboard.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <a href="../manager-web/ViewRevenueDashboard.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
                 <i class="fas fa-chart-line w-5 text-center"></i> Báo cáo tiền
             </a>
         </nav>
@@ -156,7 +156,7 @@
                 <p class="text-xs text-slate-400 font-medium">Cập nhật danh sách xe.</p>
             </div>
 
-            <div onclick="window.location.href='../Manager Web/SystemSettings.html?role=ADMIN'" class="menu-card bg-slate-900 p-10 rounded-[48px] shadow-2xl flex flex-col items-center text-center">
+            <div onclick="window.location.href='../manager-web/SystemSettings.html?role=ADMIN'" class="menu-card bg-slate-900 p-10 rounded-[48px] shadow-2xl flex flex-col items-center text-center">
                 <div class="w-16 h-16 bg-white/10 text-white rounded-3xl flex items-center justify-center mb-6 border border-white/20">
                     <i class="fas fa-sliders text-2xl"></i>
                 </div>
@@ -169,7 +169,10 @@
     <script>
         function handleLogout() {
             if(confirm("Bạn có chắc chắn muốn thoát khỏi hệ thống Admin?")) {
-                window.location.href = 'AdminManagerRegister.html';
+                // Xóa toàn bộ dữ liệu trong két sắt
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('userData');
+                window.location.href = '/RegisterLoginPage.html';
             }
         }
     </script>
