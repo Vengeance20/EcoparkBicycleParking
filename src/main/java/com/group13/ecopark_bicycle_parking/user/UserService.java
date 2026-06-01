@@ -104,11 +104,34 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
-    @Transactional(readOnly = true)
-    public UserDTO.UserResponse verifyResident(String cardUserId) {
-        return userRepository.findByNationalId(cardUserId.trim())
-                .map(this::toResponse)
-                .orElseThrow(() -> new IllegalArgumentException("Card not found"));
+    // 2. Viết lại hàm verifyResident để tự động nâng cấp cư dân
+    @Transactional
+    public UserDTO.UserResponse verifyResident(Integer userId, String cardUserId) {
+        // Tìm user đang đăng nhập
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin tài khoản!"));
+
+        // (Tùy chọn) Kiểm tra xem mã thẻ này đã có ai dùng chưa
+        if (userRepository.existsByNationalId(cardUserId) && !cardUserId.equals(user.getNationalId())) {
+            throw new IllegalArgumentException("Mã thẻ này đã được liên kết với một tài khoản khác!");
+        }
+
+        // Cập nhật quyền lợi cư dân (is_resident = 1)
+        user.setResident(true);
+        user.setResidentCardId(cardUserId);
+
+        // Lưu xuống Database
+        userRepository.save(user);
+
+        // Trả về thông tin User mới nhất để Frontend cập nhật giao diện
+        return toResponse(user);
+    }
+
+    // Hàm này lấy User từ DB và đóng gói lại thành UserResponse (có chứa walletBalance)
+    public UserDTO.UserResponse getUserProfile(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng!"));
+        return toResponse(user); // Dùng lại hàm toResponse bạn đã viết lúc trước
     }
 
     @Transactional
@@ -291,6 +314,8 @@ public class UserService {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .walletBalance(user.getWalletBalance())
+                .isResident(user.isResident())
+                .residentCardId(user.getResidentCardId())
                 .build();
     }
 }

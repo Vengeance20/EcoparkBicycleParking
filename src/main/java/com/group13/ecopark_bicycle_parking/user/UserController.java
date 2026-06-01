@@ -29,6 +29,16 @@ public class UserController {
         }
     }
 
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<?> getProfile(@PathVariable Integer userId) {
+        try {
+            // Frontend sẽ gọi vào đây mỗi khi mở trang Nạp Tiền
+            return ResponseEntity.ok(userService.getUserProfile(userId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserDTO.LoginRequest credentials) {
         try {
@@ -60,10 +70,13 @@ public class UserController {
         }
     }
 
-    @PostMapping("/verify-card")
-    public ResponseEntity<?> verifyCard(@Valid @RequestBody UserDTO.VerifyCardRequest request) {
+    @PostMapping("/verify-card/{userId}")
+    public ResponseEntity<?> verifyCard(
+            @PathVariable Integer userId,
+            @Valid @RequestBody UserDTO.VerifyCardRequest request) {
         try {
-            return ResponseEntity.ok(userService.verifyResident(request.getCardUserId()));
+            // Truyền cả userId và mã thẻ xuống Service
+            return ResponseEntity.ok(userService.verifyResident(userId, request.getCardUserId()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
