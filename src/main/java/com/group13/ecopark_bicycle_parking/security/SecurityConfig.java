@@ -3,6 +3,7 @@ package com.group13.ecopark_bicycle_parking.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -29,10 +30,18 @@ public class SecurityConfig {
 
                         // 2. MỞ CỬA CHO CÁC API KHÔNG CẦN ĐĂNG NHẬP
                         .requestMatchers("/apiv1/auth/**").permitAll()
-                        .requestMatchers("/apiv1/admin/users/managers").permitAll()
+                        .requestMatchers("/apiv1/search/**").permitAll()
+                        .requestMatchers("/apiv1/statistics/**").permitAll()
                         .requestMatchers("/api/statistics/**").permitAll()
 
-                        // 3. CÁC API CÒN LẠI BẮT BUỘC PHẢI CÓ TOKEN
+                        // 3. MỞ CỬA CHO CÁC API ADMIN
+                        .requestMatchers("/apiv1/admin/**").permitAll()
+
+                        // 4. CHO PHÉP GET danh sách xe (không cần token - AdminPage đọc thống kê)
+                        .requestMatchers(HttpMethod.GET, "/apiv1/vehicles").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/apiv1/vehicles/**").permitAll()
+
+                        // 5. CÁC API CÒN LẠI BẮT BUỘC PHẢI CÓ TOKEN
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

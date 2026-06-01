@@ -31,6 +31,14 @@ public class BikeService {
                 .getStation().getStationId();
     }
 
+    // ADMIN: Lấy toàn bộ danh sách xe
+    @Transactional(readOnly = true)
+    public java.util.List<BikeDTO.Response> getAllVehicles() {
+        return bikeRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     // 1. THÊM XE MỚI
     @Transactional
     public BikeDTO.Response addVehicle(BikeDTO.CreateRequest request, Integer managerId) {

@@ -15,7 +15,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -66,6 +68,36 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
+    // Phương thức tạo tài khoản Manager trực tiếp (dùng cho /apiv1/auth/create-manager)
+    @Transactional
+    public UserDTO.UserResponse registerWithRole(UserDTO.RegisterRequest userDTO, String role) {
+        String email = normalizeEmail(userDTO.getEmail());
+        String username = userDTO.getUsername().trim();
+
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại!");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email đã tồn tại!");
+        }
+
+        User user = User.builder()
+                .username(username)
+                .passwordHash(hashPassword(userDTO.getPassword()))
+                .fullName(trimToNull(userDTO.getFullName()))
+                .email(email)
+                .nationalId(trimToNull(userDTO.getNationalId()))
+                .phoneNumber(trimToNull(userDTO.getPhoneNumber()))
+                .role(role)
+                .status(STATUS_ACTIVE)
+                .walletBalance(BigDecimal.ZERO)
+                .createdAt(LocalDateTime.now())
+                .isDeleted(false)
+                .build();
+
+        return toResponse(userRepository.save(user));
+    }
+
     @Transactional(readOnly = true)
     public UserDTO.UserResponse authenticate(UserDTO.LoginRequest credentials) {
         User user = userRepository.findByEmail(normalizeEmail(credentials.getEmail()))
@@ -106,6 +138,13 @@ public class UserService {
 
     // 2. Viết lại hàm verifyResident để tự động nâng cấp cư dân
     @Transactional
+    public UserDTO.UserResponse verifyResident(String cardUserId) {
+        // Overload 1 tham số: dùng khi controller chỉ gửi cardUserId
+        // Tìm user theo cardUserId nếu đã liên kết, hoặc throw lỗi yêu cầu userId
+        throw new IllegalArgumentException("Thiếu userId. Vui lòng gửi kèm userId trong request.");
+    }
+
+    @Transactional
     public UserDTO.UserResponse verifyResident(Integer userId, String cardUserId) {
         // Tìm user đang đăng nhập
         User user = userRepository.findById(userId)
@@ -132,6 +171,22 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng!"));
         return toResponse(user); // Dùng lại hàm toResponse bạn đã viết lúc trước
+    }
+
+    // Lấy toàn bộ danh sách user (Admin dùng)
+    @Transactional(readOnly = true)
+    public List<UserDTO.UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Xóa mềm user (Admin dùng)
+    @Transactional
+    public void deleteUser(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng!"));
+        userRepository.delete(user); // @SQLDelete sẽ set is_deleted = true
     }
 
     @Transactional
@@ -262,6 +317,7 @@ public class UserService {
     }
 
     private boolean passwordMatches(String rawPassword, String passwordHash) {
+        // Hỗ trợ cả SHA-256 (legacy) và BCrypt (mới)
         return passwordHash.equals(hashPassword(rawPassword))
                 || passwordEncoder.matches(rawPassword, passwordHash)
                 || passwordHash.equals(rawPassword);

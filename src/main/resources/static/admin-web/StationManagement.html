@@ -48,21 +48,19 @@
     </aside>
 
     <main class="lg:ml-72 p-6 md:p-12">
-        <header class="mb-12">
-            <h1 class="text-4xl font-black text-slate-800 tracking-tight">Danh sách trạm dừng</h1>
-            <p class="text-slate-500 font-medium mt-2">Cấu hình vị trí và sức chứa của các bãi đỗ xe.</p>
+        <header class="mb-10 flex justify-between items-start flex-wrap gap-4">
+            <div>
+                <h1 class="text-4xl font-black text-slate-800 tracking-tight">Danh sách trạm dừng</h1>
+                <p id="station-count" class="text-slate-500 font-medium mt-2">Đang tải...</p>
+            </div>
+            <button onclick="loadStations()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-colors">
+                <i class="fas fa-refresh mr-1"></i> Làm mới
+            </button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex justify-between items-center group hover:shadow-md transition-all">
-                <div>
-                    <h3 class="text-xl font-black text-slate-800">Trạm A - Khu Phố Trúc</h3>
-                    <p class="text-sm text-slate-500 mt-1 font-medium">Sức chứa: 50 xe | Hiện có: 12 xe</p>
-                </div>
-                <button class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors">Cấu hình</button>
-            </div>
-
-            <button onclick="toggleModal(true)" class="border-4 border-dashed border-slate-200 rounded-[32px] p-8 flex items-center justify-center gap-4 hover:border-[#00a859] hover:bg-green-50/50 group transition-all">
+        <div id="stationGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Thêm trạm mới (card cố định) -->
+            <button onclick="toggleModal(true)" class="border-4 border-dashed border-slate-200 rounded-[32px] p-8 flex items-center justify-center gap-4 hover:border-[#00a859] hover:bg-green-50/50 group transition-all order-last">
                 <div class="w-12 h-12 bg-slate-100 group-hover:bg-[#00a859] group-hover:text-white rounded-full flex items-center justify-center text-slate-400 transition-all">
                     <i class="fas fa-plus text-xl"></i>
                 </div>
@@ -81,29 +79,195 @@
                 <div class="w-16 h-16 bg-green-50 text-[#00a859] rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
                     <i class="fas fa-map-location-dot"></i>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800">Khởi tạo trạm mới</h2>
+                <h2 id="modal-title" class="text-2xl font-black text-slate-800">Khởi tạo trạm mới</h2>
                 <p class="text-sm text-slate-400 font-medium">Nhập thông tin vị trí trạm dừng tiếp theo.</p>
             </div>
 
-            <form class="space-y-6">
+            <div class="space-y-6">
+                <input type="hidden" id="station-id">
                 <div>
                     <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Tên trạm dừng</label>
-                    <input type="text" placeholder="Vd: Công viên Mùa Hạ" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
+                    <input id="station-name" type="text" placeholder="Vd: Công viên Mùa Hạ" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
                 </div>
                 <div>
                     <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Sức chứa tối đa (xe)</label>
-                    <input type="number" placeholder="Vd: 30" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
+                    <input id="station-capacity" type="number" min="1" placeholder="Vd: 30" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Vĩ độ (Latitude)</label>
+                        <input id="station-lat" type="number" step="0.00000001" placeholder="Vd: 10.7769" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Kinh độ (Longitude)</label>
+                        <input id="station-lng" type="number" step="0.00000001" placeholder="Vd: 106.7009" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                    </div>
                 </div>
                 
                 <div class="flex gap-4 pt-4">
                     <button type="button" onclick="toggleModal(false)" class="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Hủy</button>
-                    <button type="submit" class="flex-1 px-6 py-4 bg-[#00a859] text-white font-black rounded-2xl shadow-lg shadow-green-100 hover:transform hover:-translate-y-1 transition-all">Lưu thông tin</button>
+                    <button id="saveStationBtn" type="button" onclick="saveStation()" class="flex-1 px-6 py-4 bg-[#00a859] text-white font-black rounded-2xl shadow-lg shadow-green-100 hover:transform hover:-translate-y-1 transition-all">Lưu thông tin</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
     <script>
+        const API = "http://localhost:8080";
+        let allStations = [];
+
+        function checkAuth() {
+            const role = localStorage.getItem('userRole');
+            if (!role || (role !== 'ADMIN' && role !== 'MANAGER')) {
+                alert("Bạn chưa đăng nhập!");
+                window.location.href = 'AdminManagerRegister.html';
+            }
+        }
+
+        async function loadStations() {
+            const grid = document.getElementById('stationGrid');
+            // Giữ nút "Thêm trạm mới" (order-last) và xóa các card station cũ
+            const addBtn = grid.lastElementChild;
+            grid.innerHTML = `<div class="col-span-2 p-10 text-center text-slate-400 font-bold">
+                <i class="fas fa-spinner fa-spin mr-2"></i> Đang tải danh sách trạm...
+            </div>`;
+            grid.appendChild(addBtn);
+
+            try {
+                const res = await fetch(`${API}/apiv1/search/stations`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                allStations = await res.json();
+
+                // Xóa loading
+                grid.querySelectorAll('div').forEach(el => el.remove());
+
+                if (allStations.length === 0) {
+                    grid.insertAdjacentHTML('afterbegin', `<div class="p-10 text-center text-slate-400 font-bold col-span-1">Chưa có trạm nào. Hãy thêm trạm đầu tiên!</div>`);
+                } else {
+                    allStations.forEach(s => {
+                        const card = buildStationCard(s);
+                        grid.insertAdjacentHTML('afterbegin', card);
+                    });
+                }
+
+                document.getElementById('station-count').textContent =
+                    `Cấu hình vị trí và sức chứa của ${allStations.length} bãi đỗ xe.`;
+            } catch (e) {
+                grid.querySelectorAll('div').forEach(el => el.remove());
+                grid.insertAdjacentHTML('afterbegin', `<div class="p-8 text-center text-red-500 font-bold col-span-1">
+                    Lỗi tải dữ liệu: ${e.message}
+                </div>`);
+                document.getElementById('station-count').textContent = 'Lỗi kết nối backend.';
+            }
+        }
+
+        function buildStationCard(s) {
+            const statusColor = s.status === 'ACTIVE' ? 'text-green-500' : 'text-amber-500';
+            const statusText = s.status === 'ACTIVE' ? 'Hoạt động' : (s.status || 'Không rõ');
+            return `
+            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-black text-slate-800">${s.name || s.stationName || 'Trạm ' + s.stationId}</h3>
+                        <p class="text-sm text-slate-500 mt-1 font-medium">
+                            Sức chứa: <strong>${s.capacity}</strong> xe
+                            ${s.latitude ? `| 📍 ${Number(s.latitude).toFixed(4)}, ${Number(s.longitude).toFixed(4)}` : ''}
+                        </p>
+                        <p class="text-xs font-bold mt-1 ${statusColor}">${statusText}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button onclick="editStation(${s.stationId})"
+                        class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors text-sm">
+                        <i class="fas fa-pen mr-1"></i> Sửa
+                    </button>
+                    <button onclick="confirmDeleteStation(${s.stationId}, '${(s.name || s.stationName || '').replace(/'/g, "\\'")}')"
+                        class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-500 font-bold rounded-xl transition-colors text-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        function editStation(stationId) {
+            const s = allStations.find(x => x.stationId === stationId);
+            if (!s) return;
+            document.getElementById('modal-title').textContent = 'Chỉnh sửa trạm';
+            document.getElementById('station-id').value = stationId;
+            document.getElementById('station-name').value = s.name || s.stationName || '';
+            document.getElementById('station-capacity').value = s.capacity || '';
+            document.getElementById('station-lat').value = s.latitude || '';
+            document.getElementById('station-lng').value = s.longitude || '';
+            toggleModal(true);
+        }
+
+        async function saveStation() {
+            const id = document.getElementById('station-id').value;
+            const name = document.getElementById('station-name').value.trim();
+            const capacity = parseInt(document.getElementById('station-capacity').value);
+            const lat = parseFloat(document.getElementById('station-lat').value);
+            const lng = parseFloat(document.getElementById('station-lng').value);
+
+            if (!name || !capacity) {
+                alert("Vui lòng điền Tên trạm và Sức chứa!");
+                return;
+            }
+
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || '';
+            const payload = { name, capacity, latitude: lat || 0, longitude: lng || 0, status: 'ACTIVE' };
+            const btn = document.getElementById('saveStationBtn');
+            btn.textContent = 'Đang lưu...';
+            btn.disabled = true;
+
+            try {
+                const isEdit = !!id;
+                const res = await fetch(
+                    isEdit ? `${API}/apiv1/admin/stations/${id}` : `${API}/apiv1/admin/stations`,
+                    {
+                        method: isEdit ? 'PUT' : 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                if (res.status === 404 || res.status === 405) {
+                    alert(`Backend chưa có API ${isEdit ? 'PUT' : 'POST'} /apiv1/admin/stations.\nXem hướng dẫn thêm endpoint vào StationController.`);
+                } else if (res.ok) {
+                    alert(`${isEdit ? 'Cập nhật' : 'Thêm'} trạm "${name}" thành công!`);
+                    toggleModal(false);
+                    loadStations();
+                } else {
+                    alert("Lỗi: " + await res.text());
+                }
+            } catch (e) {
+                alert("Lỗi kết nối Server!");
+            } finally {
+                btn.textContent = 'Lưu thông tin';
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmDeleteStation(stationId, name) {
+            if (!confirm(`Xóa trạm "${name}"?\nCác xe tại trạm này sẽ không còn liên kết.`)) return;
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || '';
+            try {
+                const res = await fetch(`${API}/apiv1/admin/stations/${stationId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 404 || res.status === 405) {
+                    alert(`Chưa có API xóa trạm.\nVào phpMyAdmin → bảng stations → đổi is_deleted = 1 cho station_id = ${stationId}`);
+                } else if (res.ok) {
+                    alert(`Đã xóa trạm "${name}"!`);
+                    loadStations();
+                } else {
+                    alert("Lỗi: " + await res.text());
+                }
+            } catch (e) {
+                alert("Lỗi kết nối!");
+            }
+        }
+
         function toggleModal(show) {
             const modal = document.getElementById('addStationModal');
             if (show) {
@@ -111,6 +275,13 @@
                 modal.classList.add('flex');
                 setTimeout(() => modal.classList.add('active'), 10);
             } else {
+                // Reset form
+                document.getElementById('station-id').value = '';
+                document.getElementById('station-name').value = '';
+                document.getElementById('station-capacity').value = '';
+                document.getElementById('station-lat').value = '';
+                document.getElementById('station-lng').value = '';
+                document.getElementById('modal-title').textContent = 'Khởi tạo trạm mới';
                 modal.classList.remove('active');
                 setTimeout(() => {
                     modal.classList.add('hidden');
@@ -119,13 +290,13 @@
             }
         }
 
-        // Đóng modal khi click ra ngoài
         window.onclick = function(event) {
             const modal = document.getElementById('addStationModal');
-            if (event.target == modal) {
-                toggleModal(false);
-            }
+            if (event.target == modal) toggleModal(false);
         }
+
+        checkAuth();
+        loadStations();
     </script>
 </body>
 </html>

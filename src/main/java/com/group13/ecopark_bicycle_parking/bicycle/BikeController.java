@@ -33,6 +33,12 @@ public class BikeController {
                 .getUserId();
     }
 
+    // Admin xem toàn bộ danh sách xe (không cần token)
+    @GetMapping
+    public ResponseEntity<?> getAllVehicles() {
+        return ResponseEntity.ok(bikeService.getAllVehicles());
+    }
+
     @PostMapping
     public ResponseEntity<?> createVehicle(@RequestBody BikeDTO.CreateRequest request,
                                            @RequestHeader("Authorization") String token) {

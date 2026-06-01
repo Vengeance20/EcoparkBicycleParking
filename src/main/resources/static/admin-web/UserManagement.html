@@ -54,52 +54,42 @@
         </div>
 
         <div class="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
+            <!-- Thanh tìm kiếm + filter -->
+            <div class="p-6 border-b border-slate-50 flex gap-4 items-center flex-wrap">
+                <input id="searchInput" type="text" placeholder="Tìm theo tên, email..." oninput="renderTable()"
+                    class="flex-1 min-w-[200px] bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium outline-none focus:border-[#00a859]">
+                <select id="roleFilter" onchange="renderTable()"
+                    class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-[#00a859]">
+                    <option value="">Tất cả vai trò</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="CUSTOMER">Customer</option>
+                </select>
+                <button onclick="loadUsers()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-colors">
+                    <i class="fas fa-refresh mr-1"></i> Làm mới
+                </button>
+            </div>
+
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50/50">
                         <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Họ tên</th>
                         <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Vai trò</th>
-                        <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
+                        <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Số dư ví</th>
                         <th class="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
-                    <tr>
-                        <td class="p-6">
-                            <p class="font-bold text-slate-800">Nguyễn Văn A</p>
-                            <p class="text-xs text-slate-400 font-medium">nguyenvana@ecopark.com</p>
-                        </td>
-                        <td class="p-6">
-                            <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-lg border border-blue-100">Manager</span>
-                        </td>
-                        <td class="p-6 text-center">
-                            <span class="inline-flex items-center gap-2 text-green-500 font-bold text-sm">
-                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online
-                            </span>
-                        </td>
-                        <td class="p-6 text-right">
-                            <button class="text-slate-400 hover:text-blue-500 mx-2 transition-colors font-bold text-sm">Sửa</button>
-                            <button class="text-slate-400 hover:text-red-500 mx-2 transition-colors font-bold text-sm">Xóa</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="p-6">
-                            <p class="font-bold text-slate-800">Trần Thị B (User tự tạo)</p>
-                            <p class="text-xs text-slate-400 font-medium">tranthib@gmail.com</p>
-                        </td>
-                        <td class="p-6">
-                            <span class="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black uppercase rounded-lg">User</span>
-                        </td>
-                        <td class="p-6 text-center text-slate-400 font-bold text-sm">Offline</td>
-                        <td class="p-6 text-right">
-                            <button class="text-slate-300 cursor-not-allowed mx-2 font-bold text-sm">Khóa</button>
-                        </td>
-                    </tr>
+                <tbody id="userTableBody">
+                    <tr><td colspan="4" class="p-12 text-center text-slate-400 font-bold">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Đang tải danh sách...
+                    </td></tr>
                 </tbody>
             </table>
+            <div id="tableFooter" class="p-4 text-center text-xs text-slate-400 font-bold border-t border-slate-50"></div>
         </div>
     </main>
 
+    <!-- Modal tạo Manager -->
     <div id="addManagerModal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="modal-content bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 relative">
             <button onclick="toggleModal(false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600">
@@ -114,32 +104,207 @@
                 <p class="text-sm text-slate-400 font-medium">Manager có quyền xem báo cáo và điều phối xe.</p>
             </div>
 
-            <form class="space-y-5">
+            <div class="space-y-5">
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Tên Manager</label>
-                    <input type="text" placeholder="Nhập họ và tên..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                    <input id="mgr-name" type="text" placeholder="Nhập họ và tên..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Email đăng nhập</label>
-                    <input type="email" placeholder="example@ecopark.com" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                    <input id="mgr-email" type="email" placeholder="example@ecopark.com" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block">Mật khẩu tạm thời</label>
-                    <input type="password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
+                    <input id="mgr-password" type="password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] transition-all">
                 </div>
                 
                 <div class="flex gap-4 pt-4">
                     <button type="button" onclick="toggleModal(false)" class="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Hủy</button>
-                    <button type="submit" class="flex-1 px-6 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">Tạo Manager</button>
+                    <button id="createBtn" type="button" onclick="createManager()" class="flex-1 px-6 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">Tạo Manager</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
     <script>
+        const API = "http://localhost:8080";
+        let allUsers = [];
+
+        function checkAuth() {
+            const role = localStorage.getItem('userRole');
+            if (!role || (role !== 'ADMIN' && role !== 'MANAGER')) {
+                alert("Bạn chưa đăng nhập!");
+                window.location.href = 'AdminManagerRegister.html';
+            }
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-12 text-center text-slate-400 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Đang tải...</td></tr>';
+
+            try {
+                const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || '';
+                // Endpoint GET /apiv1/auth/admin/users (được thêm vào UserController)
+                const res = await fetch(`${API}/apiv1/auth/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.status === 404) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center">
+                        <div class="inline-block bg-amber-50 border border-amber-200 rounded-2xl p-6 text-left max-w-md">
+                            <p class="font-black text-amber-700 mb-2">⚠ Backend chưa có endpoint GET /apiv1/auth/admin/users</p>
+                            <p class="text-sm text-amber-600">Thêm method getAllUsers() vào UserController.java</p>
+                        </div>
+                    </td></tr>`;
+                    return;
+                }
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                allUsers = await res.json();
+                renderTable();
+                document.getElementById('tableFooter').textContent = `Tổng ${allUsers.length} tài khoản`;
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">
+                    ❌ Lỗi kết nối: ${e.message}. Kiểm tra Backend đang chạy không?
+                </td></tr>`;
+            }
+        }
+
+        function renderTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const tbody = document.getElementById('userTableBody');
+
+            const filtered = allUsers.filter(u => {
+                const matchSearch = !search ||
+                    (u.fullName || '').toLowerCase().includes(search) ||
+                    (u.email || '').toLowerCase().includes(search) ||
+                    (u.username || '').toLowerCase().includes(search);
+                const matchRole = !roleFilter || u.role === roleFilter;
+                return matchSearch && matchRole;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 font-bold">Không tìm thấy tài khoản nào.</td></tr>';
+                return;
+            }
+
+            const roleBadge = (role) => {
+                const map = {
+                    'ADMIN':    'bg-red-50 text-red-600 border border-red-100',
+                    'MANAGER':  'bg-blue-50 text-blue-600 border border-blue-100',
+                    'CUSTOMER': 'bg-slate-100 text-slate-500'
+                };
+                return `<span class="px-3 py-1 text-[10px] font-black uppercase rounded-lg ${map[role] || 'bg-slate-100 text-slate-400'}">${role}</span>`;
+            };
+
+            tbody.innerHTML = filtered.map(u => `
+                <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <td class="p-6">
+                        <p class="font-bold text-slate-800">${u.fullName || u.username || '—'}</p>
+                        <p class="text-xs text-slate-400 font-medium">${u.email || '—'}</p>
+                    </td>
+                    <td class="p-6">${roleBadge(u.role)}</td>
+                    <td class="p-6 text-sm font-bold text-slate-600">
+                        ${u.walletBalance != null ? Number(u.walletBalance).toLocaleString('vi-VN') + ' P' : '—'}
+                    </td>
+                    <td class="p-6 text-right">
+                        ${u.role !== 'ADMIN'
+                            ? `<button onclick="confirmDelete(${u.userId}, '${u.fullName || u.username}')"
+                                class="text-slate-400 hover:text-red-500 mx-1 transition-colors font-bold text-sm" title="Xóa tài khoản">
+                                <i class="fas fa-trash"></i>
+                              </button>`
+                            : '<span class="text-slate-300 text-xs font-bold">Không thể xóa</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('tableFooter').textContent = `Hiển thị ${filtered.length} / ${allUsers.length} tài khoản`;
+        }
+
+        async function createManager() {
+            const name = document.getElementById('mgr-name').value.trim();
+            const email = document.getElementById('mgr-email').value.trim();
+            const password = document.getElementById('mgr-password').value;
+
+            if (!name || !email || !password) {
+                alert("Vui lòng điền đầy đủ Tên, Email và Mật khẩu!");
+                return;
+            }
+            if (password.length < 6) {
+                alert("Mật khẩu phải có ít nhất 6 ký tự!");
+                return;
+            }
+
+            const btn = document.getElementById('createBtn');
+            btn.textContent = 'Đang tạo...';
+            btn.disabled = true;
+
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || '';
+            const payload = { username: email, password, fullName: name, email };
+
+            try {
+                let res = await fetch(`${API}/apiv1/auth/create-manager`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.status === 404 || res.status === 405) {
+                    res = await fetch(`${API}/apiv1/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        alert(`✅ Tạo tài khoản OK!\n⚠ Role hiện là CUSTOMER.\nVào phpMyAdmin → bảng users → đổi role = 'MANAGER' cho:\n${email}`);
+                        toggleModal(false);
+                        loadUsers();
+                    } else {
+                        alert("❌ Lỗi: " + await res.text());
+                    }
+                } else if (res.ok) {
+                    alert(`✅ Tạo Manager thành công!\nEmail: ${email}\nCó thể đăng nhập ngay.`);
+                    toggleModal(false);
+                    loadUsers();
+                } else {
+                    alert("Lỗi: " + await res.text());
+                }
+            } catch (e) {
+                alert("Lỗi kết nối Server!");
+            } finally {
+                btn.textContent = 'Tạo Manager';
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmDelete(userId, name) {
+            if (!confirm(`Xóa tài khoản "${name}"?\nHành động này không thể hoàn tác.`)) return;
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || '';
+            try {
+                const res = await fetch(`${API}/apiv1/auth/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    alert(`✅ Đã xóa tài khoản "${name}"!`);
+                    loadUsers();
+                } else {
+                    alert(`⚠ Chưa có API xóa user.\nVào phpMyAdmin → bảng users → đổi is_deleted = 1 cho userId = ${userId}`);
+                }
+            } catch (e) {
+                alert("Lỗi kết nối!");
+            }
+        }
+
         function toggleModal(show) {
             const modal = document.getElementById('addManagerModal');
             if (show) {
+                document.getElementById('mgr-name').value = '';
+                document.getElementById('mgr-email').value = '';
+                document.getElementById('mgr-password').value = '';
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 setTimeout(() => modal.classList.add('active'), 10);
@@ -151,6 +316,9 @@
                 }, 300);
             }
         }
+
+        checkAuth();
+        loadUsers();
     </script>
 </body>
 </html>
