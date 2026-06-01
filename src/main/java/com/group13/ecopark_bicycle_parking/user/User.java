@@ -41,6 +41,10 @@ public class User {
     @Column(name = "is_resident", nullable = false)
     private boolean isResident = false; // Mặc định khách mới đăng ký không phải là cư dân
 
+    // THÊM DÒNG NÀY: Dành riêng cho Mã thẻ cư dân Ecopark
+    @Column(name = "resident_card_id", unique = true)
+    private String residentCardId;
+
     private String status;
 
     @Column(precision = 10, scale = 2)

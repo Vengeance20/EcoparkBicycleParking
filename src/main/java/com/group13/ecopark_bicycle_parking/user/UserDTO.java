@@ -81,6 +81,8 @@ public class UserDTO {
         private String role;
         private String status;
         private BigDecimal walletBalance;
+        private boolean isResident;
+        private String residentCardId;
     }
 
     @Data

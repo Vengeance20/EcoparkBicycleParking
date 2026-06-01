@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- 🚨 "VỆ SĨ" KIỂM TRA ĐĂNG NHẬP 🚨 -->
     <script>
         // Chạy ngay lập tức khi load trang
         const token = localStorage.getItem('accessToken');
@@ -16,11 +15,10 @@
         // Nếu không có token (chưa đăng nhập) -> Đá văng ra ngoài
         if (!token || !userDataStr) {
             alert("Bạn chưa đăng nhập! Vui lòng đăng nhập để sử dụng dịch vụ.");
-            // Dùng dấu / ở đầu để luôn trỏ về gốc của thư mục static
             window.location.href = '/RegisterLoginPage.html';
         } else {
             const userData = JSON.parse(userDataStr);
-            // Nếu có token nhưng lại là Admin hoặc Manager -> Đá về đúng chỗ của họ hoặc trang Login
+            // Nếu có token nhưng lại là Admin hoặc Manager -> Đá về đúng chỗ
             if (userData.role !== 'CUSTOMER') {
                 alert("Bạn không có quyền truy cập trang của Khách hàng!");
                 window.location.href = '/RegisterLoginPage.html';
@@ -81,7 +79,6 @@
             <h1 class="font-black text-xl tracking-tighter text-slate-800">ECOPARK BIKE</h1>
         </div>
         <div class="flex items-center gap-4">
-            <!-- Hiển thị tên người dùng -->
             <span id="welcomeName" class="font-bold text-slate-700 hidden md:block"></span>
             <button onclick="handleLogout()" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Đăng xuất">
                 <i class="fas fa-power-off"></i>
@@ -171,12 +168,11 @@
         document.getElementById('trollModal').style.display = 'none';
     }
 
+    // Đã sửa hàm đăng xuất: Xóa sạch dữ liệu trong két sắt
     function handleLogout() {
         if(confirm("Xác nhận đăng xuất khỏi hệ thống?")) {
-            // Xóa toàn bộ dữ liệu trong két sắt
             localStorage.removeItem('accessToken');
             localStorage.removeItem('userData');
-            // Trở về trang đăng nhập
             window.location.href = '/RegisterLoginPage.html';
         }
     }
