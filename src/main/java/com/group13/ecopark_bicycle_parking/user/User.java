@@ -45,4 +45,11 @@ public class User {
 
     @Column(nullable = false)
     private boolean isDeleted = false;
+
+    @Column(nullable = false, name = "is_locked")
+    private boolean isLocked = false;
+
+    // 🔴 THÊM TRƯỜNG IS_RESIDENT VÀO DATABASE
+    @Column(nullable = false, name = "is_resident")
+    private boolean isResident = false;
 }

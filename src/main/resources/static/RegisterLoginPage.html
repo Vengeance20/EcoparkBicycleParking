@@ -68,7 +68,7 @@
 
     async function handleLogin() {
         const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPass').value;
+        const password = document.getElementById('loginPass').value; // Nhập mật khẩu thật (VD: 123456)
 
         if (!email || !password) return alert("Nhập đủ thông tin!");
 
@@ -76,24 +76,35 @@
             const response = await fetch(`${API_BASE}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password }) // Gửi mật khẩu thật lên
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('accessToken', data.accessToken || data.token);
+                // 🔴 BỎ TOKEN, CHỈ LƯU THÔNG TIN USER ĐỂ BIẾT ROLE MÀ CHUYỂN TRANG
+                localStorage.removeItem('accessToken'); // Xóa token cũ nếu có
                 localStorage.setItem('userData', JSON.stringify(data.user));
-                alert("✅ Thành công!");
-                
-                if (email.includes("admin@ecopark.vn")) window.location.href = 'Admin Web/AdminPage.html';
-                else if (email.includes("manager@ecopark.vn")) window.location.href = 'Manager Web/DashboardManager.html';
-                else window.location.href = 'User Web/UserPage.html'; 
+
+                // Lấy role từ thông tin user Backend trả về
+                const userRole = data.user?.role;
+
+                // Phân quyền chuyển trang dựa trên Role trong DB
+                if (userRole === 'ADMIN') {
+                    window.location.href = 'Admin Web/AdminPage.html';
+                } else if (userRole === 'MANAGER') {
+                    window.location.href = 'Manager Web/DashboardManager.html';
+                } else {
+                    // CUSTOMER hoặc các role khác
+                    window.location.href = 'User Web/UserPage.html';
+                }
+
             } else {
-                alert("❌ Lỗi: " + (data.message || "Tài khoản không tồn tại hoặc sai pass"));
+                // Báo lỗi rõ ràng (Sai mật khẩu, hoặc Tài khoản bị khóa)
+                alert("❌ Lỗi: " + (data.message || "Tài khoản không tồn tại hoặc sai mật khẩu"));
             }
         } catch (e) {
-            alert("Lỗi kết nối! Kiểm tra lại link Backend");
+            alert("Lỗi kết nối mạng! Không thể gọi API. Kiểm tra Backend đã chạy chưa?");
         }
     }
 

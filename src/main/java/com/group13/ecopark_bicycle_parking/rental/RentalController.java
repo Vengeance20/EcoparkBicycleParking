@@ -6,72 +6,53 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/apiv1/rentals")
-@CrossOrigin(origins = "*") // Cho phép Frontend gọi vào
+@CrossOrigin(origins = "*")
 public class RentalController {
 
     @Autowired
     private RentalService rentalService;
 
+    // 🔴 API MỚI: Frontend gọi khi vừa mở trang, truyền userId lên để xem đang thuê xe gì
+    @GetMapping("/my-active-rental")
+    public ResponseEntity<?> getMyActiveRental(@RequestParam Integer userId) {
+        try {
+            return ResponseEntity.ok(rentalService.getMyActiveRental(userId));
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("NO_ACTIVE_RENTAL")) return ResponseEntity.ok(null);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/rent")
     public ResponseEntity<?> rentBike(@RequestBody RentalDTO.RentRequest request) {
         try {
-            RentalDTO.RentResponse response = rentalService.rentBike(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            // Trong thực tế sẽ dùng ControllerAdvice để handle Exception,
-            // nhưng code này giúp bắt nhanh lỗi trả về mã 400 Bad Request
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ResponseEntity.ok(rentalService.rentBike(request));
+        } catch (RuntimeException e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
-    // ==========================================
-    // API 1: Đặt xe trước (Khách ngồi ở nhà bấm)
-    // ==========================================
     @PostMapping("/reserve")
     public ResponseEntity<?> reserveBike(@RequestBody RentalDTO.RentRequest request) {
         try {
-            // Gọi xuống hàm reserveBike ở tầng Service mà bạn vừa viết
-            RentalDTO.RentResponse response = rentalService.reserveBike(request.getUserId(), request.getBikeCode());
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ResponseEntity.ok(rentalService.reserveBike(request.getUserId(), request.getBikeCode()));
+        } catch (RuntimeException e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
-    // ==========================================
-    // API 2: Nhận xe (Khách ra bãi quét mã)
-    // ==========================================
     @PostMapping("/unlock")
     public ResponseEntity<?> unlockBike(@RequestBody RentalDTO.RentRequest request) {
         try {
-            // Gọi xuống hàm unlockBike ở tầng Service
-            String message = rentalService.unlockBike(request.getUserId(), request.getBikeCode());
-            return ResponseEntity.ok(message);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ResponseEntity.ok(rentalService.unlockBike(request.getUserId(), request.getBikeCode()));
+        } catch (RuntimeException e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 
-    // ==========================================
-    // API 3: Xem lịch sử thuê xe
-    // ==========================================
-    @GetMapping("/history/{userKey}")
-    public ResponseEntity<?> getRentalHistory(@PathVariable String userKey) {
-        try {
-            return ResponseEntity.ok(rentalService.getRentalHistory(userKey));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    // Nối hàm này vào Controller để gọi xuống Service
     @PostMapping("/return")
     public ResponseEntity<?> returnBike(@RequestBody RentalDTO.ReturnRequest request) {
-        try {
-            // Chính dòng này sẽ gọi đến hàm đang bị báo vàng của bạn!
-            RentalDTO.ReturnResponse response = rentalService.returnBike(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        try { return ResponseEntity.ok(rentalService.returnBike(request)); }
+        catch (RuntimeException e) { return ResponseEntity.badRequest().body(e.getMessage()); }
+    }
+
+    @GetMapping("/history/{userKey}")
+    public ResponseEntity<?> getRentalHistory(@PathVariable String userKey) {
+        try { return ResponseEntity.ok(rentalService.getRentalHistory(userKey)); }
+        catch (RuntimeException e) { return ResponseEntity.badRequest().body(e.getMessage()); }
     }
 }

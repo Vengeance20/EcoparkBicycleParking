@@ -139,7 +139,8 @@
 
         function handleLogout() {
             if(confirm("Xác nhận đăng xuất?")) {
-                window.location.href = 'RegisterLoginPage.html';
+                // 🔴 KHÔNG XÓA DỮ LIỆU, CHỈ CHUYỂN HƯỚNG VỀ TRANG ĐĂNG NHẬP
+                window.location.href = '../RegisterLoginPage.html';
             }
         }
     </script>

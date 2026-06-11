@@ -13,6 +13,7 @@ public class BikeDTO {
     public static class CreateRequest {
         private String bikeCode;
         private Integer categoryId;
+        private Integer stationId; // 🔴 THÊM: Admin cần chọn trạm khi thêm xe
     }
 
     @Data
@@ -27,7 +28,7 @@ public class BikeDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class StatusUpdateRequest {
-        private String status; // AVAILABLE, MAINTENANCE, INACTIVE
+        private String status; // AVAILABLE, MAINTENANCE, IN_USE
     }
 
     @Data
@@ -38,7 +39,9 @@ public class BikeDTO {
         private Integer bikeId;
         private String bikeCode;
         private Integer categoryId;
+        private String categoryName; // 🔴 THÊM: Hiển thị tên loại xe
         private Integer stationId;
+        private String stationName;  // 🔴 THÊM: Hiển thị tên trạm
         private String status;
     }
 }

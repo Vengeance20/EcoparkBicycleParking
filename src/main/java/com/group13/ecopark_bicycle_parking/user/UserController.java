@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -13,13 +14,14 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
-    private final JwtUtil jwtUtil; // Thêm máy in thẻ
+    private final JwtUtil jwtUtil;
 
-    // Nhúng JwtUtil qua Constructor
     public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
     }
+
+    // ==================== API CỦA USER ====================
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserDTO.RegisterRequest userDTO) {
@@ -33,27 +35,17 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserDTO.LoginRequest credentials) {
         try {
-            // 1. Xác thực tài khoản (Kiểm tra email, password)
             UserDTO.UserResponse user = userService.authenticate(credentials);
-
-            // 2. Cấp thẻ JWT Token (Dùng username làm định danh)
             String token = jwtUtil.generateToken(user.getUsername());
-
-            // 3. Trả về cả thông tin User và Token
-            return ResponseEntity.ok(Map.of(
-                    "user", user,
-                    "accessToken", token
-            ));
+            return ResponseEntity.ok(Map.of("user", user, "accessToken", token));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+    // 🔴 API NÀY SẼ XỬ LÝ CẢ CHỈNH SỬA PROFILE LẪN XÁC THỰC CƯ DÂN
     @PutMapping("/update-profile/{userId}")
-    public ResponseEntity<?> updateProfile(
-            @PathVariable Integer userId,
-            @Valid @RequestBody UserDTO.UpdateProfileRequest userDTO
-    ) {
+    public ResponseEntity<?> updateProfile(@PathVariable Integer userId, @Valid @RequestBody UserDTO.UpdateProfileRequest userDTO) {
         try {
             return ResponseEntity.ok(userService.updateUserInfo(userId, userDTO));
         } catch (IllegalArgumentException e) {
@@ -61,31 +53,56 @@ public class UserController {
         }
     }
 
-    @PostMapping("/verify-card")
-    public ResponseEntity<?> verifyCard(@Valid @RequestBody UserDTO.VerifyCardRequest request) {
+    // 🔴 ĐÃ XÓA @PostMapping("/verify-card") VÌ ĐÃ GỘP VÀO UPDATE PROFILE
+
+    // ==================== API CỦA ADMIN (QUẢN LÝ TÀI KHOẢN) ====================
+
+    @GetMapping("/users")
+    public ResponseEntity<List<UserDTO.UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @PutMapping("/users/{id}/lock")
+    public ResponseEntity<?> lockUser(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(userService.verifyResident(request.getCardUserId()));
+            return ResponseEntity.ok(userService.lockUser(id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // 🔴 HÀM MỚI: Bắt lỗi Validate (@NotBlank, @Size, @Email...) trả về message tiếng Việt
+    @PutMapping("/users/{id}/unlock")
+    public ResponseEntity<?> unlockUser(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(userService.unlockUser(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/users/{id}/role")
+    public ResponseEntity<?> updateRole(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        try {
+            String newRole = body.get("role");
+            return ResponseEntity.ok(userService.updateRole(id, newRole));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ==================== XỬ LÝ LỖI ====================
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
         return ResponseEntity.badRequest().body(errorMessage);
     }
 
-     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<?> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException ex) {
         String message = "Lỗi cơ sở dữ liệu!";
-        // Kiểm tra xem là trùng Username hay Email
-        if (ex.getMessage().contains("username")) {
-            message = "Tên đăng nhập đã tồn tại!";
-        } else if (ex.getMessage().contains("email")) {
-            message = "Email đã tồn tại!";
-        }
+        if (ex.getMessage().contains("username")) message = "Tên đăng nhập đã tồn tại!";
+        else if (ex.getMessage().contains("email")) message = "Email đã tồn tại!";
         return ResponseEntity.badRequest().body(message);
     }
 }

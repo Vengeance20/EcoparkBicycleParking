@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 //@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @SpringBootApplication
 public class EcoparkBicycleParkingApplication {
+
 	public static void main(String[] args) {
 		SpringApplication.run(EcoparkBicycleParkingApplication.class, args);
 	}

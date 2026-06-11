@@ -17,6 +17,9 @@ public interface RentalRepository extends JpaRepository<Rental, Integer> {
 
     List<Rental> findAllByUserUserIdOrderByRentalIdDesc(Integer userId);
 
+    // 🔴 SỬA DÒNG NÀY: Đổi Optional thành List
+    List<Rental> findAllByUserUserIdAndStatusIn(Integer userId, List<String> statuses);
+
     @Query("""
             select new com.group13.ecopark_bicycle_parking.rental.RentalAggregate(
                 count(r),

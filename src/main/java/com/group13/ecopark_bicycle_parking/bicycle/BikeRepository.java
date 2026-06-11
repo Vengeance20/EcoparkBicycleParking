@@ -37,4 +37,10 @@ public interface BikeRepository extends JpaRepository<Bike, Integer> {
 
     @Query("SELECT b FROM Bike b WHERE b.bikeId = :bikeId AND b.station.stationId = :stationId")
     Optional<Bike> findBikeForManager(@Param("bikeId") Integer bikeId, @Param("stationId") Integer stationId);
+
+    // Đếm tất cả xe chưa bị xóa
+    long countByIsDeletedFalse();
+
+    // Đếm xe theo trạng thái chưa bị xóa (Dùng cho AVAILABLE, IN_USE, MAINTENANCE)
+    long countByStatusAndIsDeletedFalse(String status);
 }

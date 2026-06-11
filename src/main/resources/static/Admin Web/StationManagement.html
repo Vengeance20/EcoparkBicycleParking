@@ -3,129 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecopark Bike - Quản lý Trạm</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>ECOPARK - Quản Lý Trạm</title>
     <style>
-        .sidebar-custom { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
-        .nav-link { transition: all 0.3s ease; border-radius: 12px; margin: 4px 0; }
-        .nav-link:hover { background: #f0fdf4; color: #00a859 !important; transform: translateX(5px); }
-        .nav-link.active { background: #00a859; color: white !important; box-shadow: 0 10px 15px -3px rgba(0, 168, 89, 0.2); }
-        .bg-pattern { background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px); background-size: 24px 24px; }
-        
-        /* Hiệu ứng mượt cho Modal */
-        #addStationModal { transition: opacity 0.3s ease; }
-        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; }
-        #addStationModal.active .modal-content { transform: scale(1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; background-color: #f3f4f6; color: #374151; }
+
+        .sidebar { width: 250px; background-color: #1f2937; color: white; height: 100vh; padding-top: 20px; position: fixed; }
+        .sidebar h2 { text-align: center; color: #4ade80; margin-bottom: 30px; font-size: 24px; }
+        .sidebar a { display: block; color: #d1d5db; text-decoration: none; padding: 15px 25px; transition: 0.3s; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #374151; color: white; border-left-color: #4ade80; }
+
+        .main-content { margin-left: 250px; flex: 1; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; font-weight: bold; color: #111827; }
+        .header p { font-size: 14px; color: #6b7280; margin-top: 5px; }
+
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        thead { background-color: #e5e7eb; }
+        th { padding: 12px 15px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #4b5563; white-space: nowrap; }
+        td { padding: 12px 15px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+        tr:hover td { background-color: #f9fafb; }
+
+        .badge { padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-active { background-color: #dcfce7; color: #16a34a; }
+        .badge-maintenance { background-color: #fef9c3; color: #ca8a04; }
+
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-add { background-color: #2563eb; padding: 10px 20px; font-size: 14px; }
+        .btn-maintenance { background-color: #f59e0b; }
+        .btn-active { background-color: #22c55e; }
+
+        .bike-stat { display: inline-block; text-align: center; margin-right: 8px; font-size: 12px; }
+        .bike-stat span { display: block; font-weight: bold; font-size: 14px; }
+
+        /* CSS CHO MODAL THÊM TRẠM */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; padding: 30px; border-radius: 8px; width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal h2 { margin-bottom: 20px; font-size: 20px; color: #1f2937; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600; }
+        .form-group input { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background-color: #6b7280; }
     </style>
 </head>
-<body class="bg-pattern min-h-screen font-sans">
+<body>
 
-    <aside class="fixed left-0 top-0 h-full w-72 sidebar-custom border-r border-slate-200 hidden lg:flex flex-col p-8 z-50">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <div class="w-12 h-12 bg-[#00a859] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-200">
-                <i class="fas fa-leaf text-xl"></i>
-            </div>
-            <div>
-                <span class="font-black text-2xl tracking-tight text-slate-800 block">ECOPARK</span>
-                <span class="text-[10px] font-bold text-green-600 uppercase tracking-[0.2em]">Bike System</span>
-            </div>
+<div class="sidebar">
+    <h2>ECOPARK</h2>
+    <a href="AdminPage.html">Dashboard</a>
+    <a href="UserManagement.html">Quản lý User/Mgr</a>
+    <a href="StationManagement.html" class="active">Quản lý Trạm</a>
+    <a href="ModifyBikeLists.html">Quản lý Xe</a>
+</div>
+
+<div class="main-content">
+    <div class="header">
+        <div>
+            <h1>Quản Lý Trạm</h1>
+            <p>Thông tin chi tiết và thống kê xe tại các trạm</p>
         </div>
-        <nav class="flex-1 space-y-2">
-            <a href="AdminPage.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
-            </a>
-            <a href="UserManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-user-gear w-5 text-center"></i> Quản lý User
-            </a>
-            <a href="StationManagement.html" class="nav-link active flex items-center gap-4 p-4 text-white font-bold">
-                <i class="fas fa-charging-station w-5 text-center"></i> Quản lý Trạm
-            </a>
-            <a href="ModifyBikeLists.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-bicycle w-5 text-center"></i> Quản lý Xe
-            </a>
-        </nav>
-    </aside>
-
-    <main class="lg:ml-72 p-6 md:p-12">
-        <header class="mb-12">
-            <h1 class="text-4xl font-black text-slate-800 tracking-tight">Danh sách trạm dừng</h1>
-            <p class="text-slate-500 font-medium mt-2">Cấu hình vị trí và sức chứa của các bãi đỗ xe.</p>
-        </header>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex justify-between items-center group hover:shadow-md transition-all">
-                <div>
-                    <h3 class="text-xl font-black text-slate-800">Trạm A - Khu Phố Trúc</h3>
-                    <p class="text-sm text-slate-500 mt-1 font-medium">Sức chứa: 50 xe | Hiện có: 12 xe</p>
-                </div>
-                <button class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors">Cấu hình</button>
-            </div>
-
-            <button onclick="toggleModal(true)" class="border-4 border-dashed border-slate-200 rounded-[32px] p-8 flex items-center justify-center gap-4 hover:border-[#00a859] hover:bg-green-50/50 group transition-all">
-                <div class="w-12 h-12 bg-slate-100 group-hover:bg-[#00a859] group-hover:text-white rounded-full flex items-center justify-center text-slate-400 transition-all">
-                    <i class="fas fa-plus text-xl"></i>
-                </div>
-                <span class="text-xl font-black text-slate-400 group-hover:text-[#00a859]">Thêm trạm mới</span>
-            </button>
-        </div>
-    </main>
-
-    <div id="addStationModal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="modal-content bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 relative">
-            <button onclick="toggleModal(false)" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-green-50 text-[#00a859] rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-                    <i class="fas fa-map-location-dot"></i>
-                </div>
-                <h2 class="text-2xl font-black text-slate-800">Khởi tạo trạm mới</h2>
-                <p class="text-sm text-slate-400 font-medium">Nhập thông tin vị trí trạm dừng tiếp theo.</p>
-            </div>
-
-            <form class="space-y-6">
-                <div>
-                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Tên trạm dừng</label>
-                    <input type="text" placeholder="Vd: Công viên Mùa Hạ" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
-                </div>
-                <div>
-                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Sức chứa tối đa (xe)</label>
-                    <input type="number" placeholder="Vd: 30" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none focus:border-[#00a859] focus:ring-4 focus:ring-green-50 transition-all">
-                </div>
-                
-                <div class="flex gap-4 pt-4">
-                    <button type="button" onclick="toggleModal(false)" class="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Hủy</button>
-                    <button type="submit" class="flex-1 px-6 py-4 bg-[#00a859] text-white font-black rounded-2xl shadow-lg shadow-green-100 hover:transform hover:-translate-y-1 transition-all">Lưu thông tin</button>
-                </div>
-            </form>
-        </div>
+        <!-- NÚT THÊM TRẠM MỚI -->
+        <button class="btn btn-add" onclick="openAddModal()">+ Thêm Trạm Mới</button>
     </div>
 
-    <script>
-        function toggleModal(show) {
-            const modal = document.getElementById('addStationModal');
-            if (show) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                setTimeout(() => modal.classList.add('active'), 10);
-            } else {
-                modal.classList.remove('active');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }, 300);
-            }
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên Trạm</th>
+                <th>Sức chứa</th>
+                <th>Trạng thái</th>
+                <th>Thống kê xe</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody id="station-table-body">
+            <tr><td colspan="6" style="text-align: center; padding: 30px;">Đang tải dữ liệu...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL THÊM TRẠM MỚI -->
+<div class="modal-overlay" id="stationModal">
+    <div class="modal">
+        <h2>Thêm Trạm Mới</h2>
+        <div class="form-group">
+            <label>Tên trạm <span style="color:red;">*</span></label>
+            <input type="text" id="stationName" placeholder="VD: Bãi xe Công viên Mưa Thu">
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Vĩ độ (Latitude) <span style="color:red;">*</span></label>
+                <input type="number" step="any" id="stationLat" placeholder="VD: 21.0091">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Kinh độ (Longitude) <span style="color:red;">*</span></label>
+                <input type="number" step="any" id="stationLng" placeholder="VD: 105.8411">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Sức chứa (Số lượng xe tối đa) <span style="color:red;">*</span></label>
+            <input type="number" id="stationCapacity" placeholder="VD: 20">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeModal()">Hủy bỏ</button>
+            <button class="btn btn-add" onclick="saveStation()">Tạo Trạm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080/api/manager/admin/stations";
+
+    async function fetchStations() {
+        try {
+            const response = await fetch(`${API_BASE_URL}`);
+            if (!response.ok) throw new Error("Lỗi kết nối");
+            const stations = await response.json();
+            renderTable(stations);
+        } catch (error) {
+            document.getElementById("station-table-body").innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; color:red; padding: 30px;">
+                        <b>Lỗi kết nối Server!</b><br>${error.message}
+                    </td></tr>`;
+        }
+    }
+
+    function renderTable(stations) {
+        const tbody = document.getElementById("station-table-body");
+        tbody.innerHTML = "";
+
+        if(stations.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Không có trạm nào.</td></tr>`;
+            return;
         }
 
-        // Đóng modal khi click ra ngoài
-        window.onclick = function(event) {
-            const modal = document.getElementById('addStationModal');
-            if (event.target == modal) {
-                toggleModal(false);
+        stations.forEach(station => {
+            const tr = document.createElement("tr");
+
+            let statusBadge = station.stationStatus === 'ACTIVE'
+                ? '<span class="badge badge-active">Hoạt động</span>'
+                : '<span class="badge badge-maintenance">Bảo trì</span>';
+
+            let bikeStatsHtml = `
+                    <div class="bike-stat"><span>${station.totalVehicles || 0}</span>Tổng</div>
+                    <div class="bike-stat" style="color: #16a34a;"><span>${station.availableVehicles || 0}</span>Sẵn sàng</div>
+                    <div class="bike-stat" style="color: #2563eb;"><span>${station.inUseVehicles || 0}</span>Đang thuê</div>
+                    <div class="bike-stat" style="color: #ca8a04;"><span>${station.maintenanceVehicles || 0}</span>Bảo trì</div>
+                `;
+
+            let actionHtml = "";
+            if (station.stationStatus === 'ACTIVE') {
+                actionHtml += `<button class="btn btn-maintenance" onclick="setMaintenance(${station.stationId})">Bảo trì trạm</button>`;
+            } else {
+                actionHtml += `<button class="btn btn-active" onclick="setActive(${station.stationId})">Gỡ bảo trì</button>`;
             }
+
+            tr.innerHTML = `
+                    <td>${station.stationId}</td>
+                    <td style="font-weight: 600;">${station.stationName}</td>
+                    <td>${station.capacity} xe</td>
+                    <td>${statusBadge}</td>
+                    <td>${bikeStatsHtml}</td>
+                    <td>${actionHtml}</td>
+                `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // HÀM MỞ/ĐÓNG MODAL VÀ LƯU TRẠM
+    function openAddModal() { document.getElementById("stationModal").classList.add("active"); }
+    function closeModal() {
+        document.getElementById("stationModal").classList.remove("active");
+        // Xóa dữ liệu cũ trong form
+        document.getElementById("stationName").value = "";
+        document.getElementById("stationLat").value = "";
+        document.getElementById("stationLng").value = "";
+        document.getElementById("stationCapacity").value = "";
+    }
+
+    async function saveStation() {
+        const name = document.getElementById("stationName").value;
+        const lat = document.getElementById("stationLat").value;
+        const lng = document.getElementById("stationLng").value;
+        const capacity = document.getElementById("stationCapacity").value;
+
+        if(!name || !lat || !lng || !capacity) {
+            alert("Vui lòng điền đầy đủ thông tin!");
+            return;
         }
-    </script>
+
+        const stationData = {
+            name: name,
+            latitude: parseFloat(lat),
+            longitude: parseFloat(lng),
+            capacity: parseInt(capacity)
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stationData)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || "Lỗi khi thêm trạm");
+            }
+
+            alert("Thêm trạm thành công!");
+            closeModal();
+            fetchStations(); // Tải lại danh sách
+        } catch (error) {
+            alert("Thêm trạm thất bại: " + error.message);
+        }
+    }
+
+    async function setMaintenance(id) {
+        if (!confirm("Chuyển trạm này sang trạng thái BẢO TRÌ?")) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/${id}/maintenance`, { method: 'PUT' });
+            if (!response.ok) throw new Error("Lỗi server");
+            fetchStations();
+        } catch (error) { alert("Thao tác thất bại!"); }
+    }
+
+    async function setActive(id) {
+        if (!confirm("Gỡ bảo trì, đưa trạm này về trạng thái HOẠT ĐỘNG?")) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/${id}/active`, { method: 'PUT' });
+            if (!response.ok) throw new Error("Lỗi server");
+            fetchStations();
+        } catch (error) { alert("Thao tác thất bại!"); }
+    }
+
+    window.onload = fetchStations;
+</script>
 </body>
 </html>

@@ -25,6 +25,7 @@ public class RentalDTO {
         private String bikeCode;
         private LocalDateTime startTime;
         private String message;
+        private String status;
     }
 
     @Data

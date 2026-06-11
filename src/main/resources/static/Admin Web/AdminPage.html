@@ -28,7 +28,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 168, 89, 0.2);
         }
         .nav-link.active i { color: white; }
-        
+
         .nav-link.active::after {
             content: '';
             position: absolute;
@@ -40,9 +40,9 @@
         }
 
         .menu-card { transition: all 0.4s ease; cursor: pointer; }
-        .menu-card:hover { 
-            transform: translateY(-10px); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08); 
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
         }
         .bg-pattern {
             background-color: #f8fafc;
@@ -53,125 +53,155 @@
 </head>
 <body class="bg-pattern min-h-screen font-sans">
 
-    <aside class="fixed left-0 top-0 h-full w-72 sidebar-custom border-r border-slate-200 hidden lg:flex flex-col p-8 z-50">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <div class="w-12 h-12 bg-[#00a859] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-200">
-                <i class="fas fa-leaf text-xl"></i>
+<aside class="fixed left-0 top-0 h-full w-72 sidebar-custom border-r border-slate-200 hidden lg:flex flex-col p-8 z-50">
+    <div class="flex items-center gap-4 mb-12 px-2">
+        <div class="w-12 h-12 bg-[#00a859] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-200">
+            <i class="fas fa-leaf text-xl"></i>
+        </div>
+        <div>
+            <span class="font-black text-2xl tracking-tight text-slate-800 block">ECOPARK</span>
+            <span class="text-[10px] font-bold text-green-600 uppercase tracking-[0.2em]">Bike System</span>
+        </div>
+    </div>
+
+    <nav class="flex-1 space-y-2">
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-3 mb-4 block">Quản trị lõi</label>
+
+        <a href="AdminPage.html" class="nav-link active flex items-center gap-4 p-4 text-slate-600 font-bold">
+            <i class="fas fa-th-large w-5 text-center"></i> Dashboard
+        </a>
+        <a href="UserManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <i class="fas fa-user-gear w-5 text-center"></i> Quản lý User
+        </a>
+        <a href="StationManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <i class="fas fa-charging-station w-5 text-center"></i> Quản lý Trạm
+        </a>
+        <a href="ModifyBikeLists.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <i class="fas fa-bicycle w-5 text-center"></i> Quản lý Xe
+        </a>
+
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-3 mt-8 mb-4 block">Dữ liệu & Vận hành</label>
+        <a href="../Manager Web/ViewBikeRental.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <i class="fas fa-route w-5 text-center"></i> Lịch sử thuê
+        </a>
+        <a href="../Manager Web/ViewRevenueDashboard.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <i class="fas fa-chart-line w-5 text-center"></i> Báo cáo tiền
+        </a>
+        <a href="SystemConfig.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
+            <i class="fas fa-sliders w-5 text-center"></i> Cấu hình hệ thống
+        </a>
+    </nav>
+
+    <div class="mt-auto pt-6 border-t border-slate-100">
+        <button onclick="handleLogout()" class="group flex items-center gap-4 p-4 text-slate-400 hover:text-red-500 font-bold w-full transition-all">
+            <i class="fas fa-power-off group-hover:rotate-90 transition-transform"></i> Thoát hệ thống
+        </button>
+    </div>
+</aside>
+
+<main class="lg:ml-72 p-6 md:p-12">
+    <header class="flex justify-between items-center mb-12">
+        <div>
+            <h1 class="text-4xl font-black text-slate-800 tracking-tight">Trang chủ Quản trị</h1>
+            <p class="text-slate-500 font-medium mt-2">Chào mừng Admin, hệ thống đang vận hành ổn định.</p>
+        </div>
+        <div class="flex items-center gap-5 bg-white p-3 pr-8 rounded-2xl shadow-sm border border-slate-100">
+            <div class="relative">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=00a859&color=fff" class="w-12 h-12 rounded-xl shadow-md">
+                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
             <div>
-                <span class="font-black text-2xl tracking-tight text-slate-800 block">ECOPARK</span>
-                <span class="text-[10px] font-bold text-green-600 uppercase tracking-[0.2em]">Bike System</span>
+                <p class="text-[10px] font-black text-slate-400 uppercase">Role: Admin Tối Cao</p>
+                <p class="text-sm font-bold text-slate-800">MANAGER ONLINE</p>
             </div>
         </div>
+    </header>
 
-        <nav class="flex-1 space-y-2">
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-3 mb-4 block">Quản trị lõi</label>
-            
-            <a href="AdminPage.html" class="nav-link active flex items-center gap-4 p-4 text-slate-600 font-bold">
-                <i class="fas fa-th-large w-5 text-center"></i> Dashboard
-            </a>
-            <a href="UserManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-user-gear w-5 text-center"></i> Quản lý User
-            </a>
-            <a href="StationManagement.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-charging-station w-5 text-center"></i> Quản lý Trạm
-            </a>
-            <a href="ModifyBikeLists.html" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-bicycle w-5 text-center"></i> Quản lý Xe
-            </a>
-
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-3 mt-8 mb-4 block">Dữ liệu & Vận hành</label>
-            <a href="../Manager Web/ViewBikeRental.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-route w-5 text-center"></i> Lịch sử thuê
-            </a>
-            <a href="../Manager Web/ViewRevenueDashboard.html?role=ADMIN" class="nav-link flex items-center gap-4 p-4 text-slate-500 font-bold">
-                <i class="fas fa-chart-line w-5 text-center"></i> Báo cáo tiền
-            </a>
-        </nav>
-
-        <div class="mt-auto pt-6 border-t border-slate-100">
-            <button onclick="handleLogout()" class="group flex items-center gap-4 p-4 text-slate-400 hover:text-red-500 font-bold w-full transition-all">
-                <i class="fas fa-power-off group-hover:rotate-90 transition-transform"></i> Thoát hệ thống
-            </button>
+    <!-- 🔴 THÊM ID CHO CÁC THẺ SỐ LIỆU -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6">
+            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl shadow-inner"><i class="fas fa-bicycle"></i></div>
+            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tổng số xe</p><p id="statTotalBikes" class="text-4xl font-black text-slate-800">0</p></div>
         </div>
-    </aside>
+        <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 text-green-600">
+            <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner"><i class="fas fa-check-circle"></i></div>
+            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-widest text-slate-400">Đang hoạt động</p><p id="statActiveBikes" class="text-4xl font-black text-slate-800">0</p></div>
+        </div>
+        <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-6 text-amber-500">
+            <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner"><i class="fas fa-wrench"></i></div>
+            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-widest text-slate-400">Bảo trì</p><p id="statMaintenanceBikes" class="text-4xl font-black text-slate-800">0</p></div>
+        </div>
+    </div>
 
-    <main class="lg:ml-72 p-6 md:p-12">
-        <header class="flex justify-between items-center mb-12">
-            <div>
-                <h1 class="text-4xl font-black text-slate-800 tracking-tight">Trang chủ Quản trị</h1>
-                <p class="text-slate-500 font-medium mt-2">Chào mừng Admin, hệ thống đang vận hành ổn định.</p>
-            </div>
-            <div class="flex items-center gap-5 bg-white p-3 pr-8 rounded-2xl shadow-sm border border-slate-100">
-                <div class="relative">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=00a859&color=fff" class="w-12 h-12 rounded-xl shadow-md">
-                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-                </div>
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Role: Admin Tối Cao</p>
-                    <p class="text-sm font-bold text-slate-800">MANAGER ONLINE</p>
-                </div>
-            </div>
-        </header>
+    <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-8 px-4 text-center">Lối tắt chức năng hệ thống</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6">
-                <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl shadow-inner"><i class="fas fa-bicycle"></i></div>
-                <div><p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tổng số xe</p><p class="text-4xl font-black text-slate-800">1,240</p></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div onclick="window.location.href='UserManagement.html'" class="menu-card bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-indigo-500 text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-100">
+                <i class="fas fa-users-cog text-2xl"></i>
             </div>
-            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-6 text-green-600">
-                <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner"><i class="fas fa-check-circle"></i></div>
-                <div><p class="text-xs font-bold text-slate-400 uppercase tracking-widest text-slate-400">Đang hoạt động</p><p class="text-4xl font-black text-slate-800">382</p></div>
-            </div>
-            <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-6 text-amber-500">
-                <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner"><i class="fas fa-wrench"></i></div>
-                <div><p class="text-xs font-bold text-slate-400 uppercase tracking-widest text-slate-400">Bảo trì</p><p class="text-4xl font-black text-slate-800">12</p></div>
-            </div>
+            <h3 class="font-black text-slate-800 mb-2">Quản lý User</h3>
+            <p class="text-xs text-slate-400 font-medium">Tài khoản & Phân quyền.</p>
         </div>
 
-        <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-8 px-4 text-center">Lối tắt chức năng hệ thống</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div onclick="window.location.href='UserManagement.html'" class="menu-card bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-indigo-500 text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-100">
-                    <i class="fas fa-users-cog text-2xl"></i>
-                </div>
-                <h3 class="font-black text-slate-800 mb-2">Quản lý User</h3>
-                <p class="text-xs text-slate-400 font-medium">Tài khoản & Phân quyền.</p>
+        <div onclick="window.location.href='StationManagement.html'" class="menu-card bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-emerald-100">
+                <i class="fas fa-map-location-dot text-2xl"></i>
             </div>
-
-            <div onclick="window.location.href='StationManagement.html'" class="menu-card bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-emerald-100">
-                    <i class="fas fa-map-location-dot text-2xl"></i>
-                </div>
-                <h3 class="font-black text-slate-800 mb-2">Quản lý Trạm</h3>
-                <p class="text-xs text-slate-400 font-medium">Cấu hình bãi đỗ xe.</p>
-            </div>
-
-            <div onclick="window.location.href='ModifyBikeLists.html'" class="menu-card bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-[#00a859] text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-green-100">
-                    <i class="fas fa-bicycle text-2xl"></i>
-                </div>
-                <h3 class="font-black text-slate-800 mb-2">Quản lý Xe</h3>
-                <p class="text-xs text-slate-400 font-medium">Cập nhật danh sách xe.</p>
-            </div>
-
-            <div onclick="window.location.href='../Manager Web/SystemSettings.html?role=ADMIN'" class="menu-card bg-slate-900 p-10 rounded-[48px] shadow-2xl flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-white/10 text-white rounded-3xl flex items-center justify-center mb-6 border border-white/20">
-                    <i class="fas fa-sliders text-2xl"></i>
-                </div>
-                <h3 class="font-black text-white mb-2">Cài đặt cước</h3>
-                <p class="text-xs text-white/50 font-medium">Thiết lập giá & vận hành.</p>
-            </div>
+            <h3 class="font-black text-slate-800 mb-2">Quản lý Trạm</h3>
+            <p class="text-xs text-slate-400 font-medium">Cấu hình bãi đỗ xe.</p>
         </div>
-    </main>
 
-    <script>
-        function handleLogout() {
-            if(confirm("Bạn có chắc chắn muốn thoát khỏi hệ thống Admin?")) {
-                window.location.href = 'AdminManagerRegister.html';
+        <div onclick="window.location.href='ModifyBikeLists.html'" class="menu-card bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-[#00a859] text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-green-100">
+                <i class="fas fa-bicycle text-2xl"></i>
+            </div>
+            <h3 class="font-black text-slate-800 mb-2">Quản lý Xe</h3>
+            <p class="text-xs text-slate-400 font-medium">Cập nhật danh sách xe.</p>
+        </div>
+
+        <div onclick="window.location.href='SystemConfig.html'" class="menu-card bg-slate-900 p-10 rounded-[48px] shadow-2xl flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-white/10 text-white rounded-3xl flex items-center justify-center mb-6 border border-white/20">
+                <i class="fas fa-sliders text-2xl"></i>
+            </div>
+            <h3 class="font-black text-white mb-2">Cài đặt cước</h3>
+            <p class="text-xs text-white/50 font-medium">Thiết lập giá & vận hành.</p>
+        </div>
+    </div>
+</main>
+
+<!-- 🔴 THÊM SCRIPT GỌI API THỐNG KÊ -->
+<script>
+    const API_BASE = "http://localhost:8080/apiv1/admin/dashboard";
+
+    async function fetchDashboardStats() {
+        try {
+            const res = await fetch(`${API_BASE}/stats`);
+            if (res.ok) {
+                const data = await res.json();
+
+                // Format số có dấu chẩu phân cách hàng nghìn (VD: 1.240)
+                const formatNumber = (num) => new Intl.NumberFormat('vi-VN').format(num);
+
+                document.getElementById('statTotalBikes').innerText = formatNumber(data.totalBikes || 0);
+                document.getElementById('statActiveBikes').innerText = formatNumber(data.activeBikes || 0);
+                document.getElementById('statMaintenanceBikes').innerText = formatNumber(data.maintenanceBikes || 0);
+            } else {
+                console.error("Lỗi khi tải thống kê");
             }
+        } catch (e) {
+            console.error("Lỗi kết nối API thống kê:", e);
         }
-    </script>
+    }
+
+    function handleLogout() {
+        if(confirm("Bạn có chắc chắn muốn thoát khỏi hệ thống Admin?")) {
+            window.location.href = 'AdminManagerRegister.html';
+        }
+    }
+
+    // Tải số liệu ngay khi mở trang
+    window.onload = fetchDashboardStats;
+</script>
 </body>
 </html>

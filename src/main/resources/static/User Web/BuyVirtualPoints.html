@@ -48,13 +48,13 @@
             <div class="relative grid grid-cols-2 md:grid-cols-3 gap-4 mb-10 p-2" id="packageGrid">
                 <div id="active-bg"></div>
                 <div onclick="selectPkg(this, 10000, 10000)" class="pkg-card p-5 rounded-2xl text-center">
-                    <p class="font-bold">10.000 P</p><p class="text-[10px] text-gray-400">Giá: 10k</p>
+                    <p class="font-bold">10 P</p><p class="text-[10px] text-gray-400">Giá: 10k</p>
                 </div>
                 <div onclick="selectPkg(this, 50000, 50000)" class="pkg-card p-5 rounded-2xl text-center">
-                    <p class="font-bold">50.000 P</p><p class="text-[10px] text-gray-400">Giá: 50k</p>
+                    <p class="font-bold">50 P</p><p class="text-[10px] text-gray-400">Giá: 50k</p>
                 </div>
-                <div onclick="selectPkg(this, 105000, 100000)" class="pkg-card p-5 rounded-2xl text-center">
-                    <p class="font-bold">105.000 P</p><p class="text-[9px] text-blue-600 font-bold">+5% Bonus</p>
+                <div onclick="selectPkg(this, 105000, 105000)" class="pkg-card p-5 rounded-2xl text-center">
+                    <p class="font-bold">105 P</p><p class="text-[9px] text-blue-600 font-bold">Mình thích thì mình thêm 5 điểm thôi!</p>
                 </div>
             </div>
             <div class="bg-white rounded-[40px] p-8 shadow-xl border border-gray-100 text-center">
@@ -75,12 +75,10 @@
     <div id="toast"><div id="toastIcon"></div><div><p id="toastTitle" class="font-bold"></p><p id="toastDesc" class="text-xs"></p></div></div>
 
     <script>
-        const API_BASE_URL = "http://localhost:8080"; 
+        const API_BASE_URL = "http://localhost:8080";
         let selectedPriceVnd = 10000;
         let isProcessing = false;
 
-        // 🔴 ĐÃ XÓA DÒNG "const CURRENT_USER_ID = 1" ĐI
-        // Thay bằng hàm lấy ID động của user đang đăng nhập
         function getCurrentUserId() {
             const userData = JSON.parse(localStorage.getItem('userData')) || {};
             if (!userData.userId) {
@@ -93,35 +91,21 @@
 
         // 1. Lấy số dư thực tế khi load trang
         async function fetchCurrentBalance() {
-            const userId = getCurrentUserId();
-            if (!userId) return;
-
-            try {
-                // Gọi API lấy số dư (Nếu backend bạn chưa có API này, nó sẽ nhảy xuống catch lấy từ localStorage)
-                const res = await fetch(`${API_BASE_URL}/apiv1/payment/balance/${userId}`);
-                if (res.ok) {
-                    const balance = await res.json();
-                    updateBalanceUI(balance);
-                } else {
-                    throw new Error("API not found");
-                }
-            } catch (e) {
-                // Dự phòng: Lấy số dư từ localStorage (lúc đăng nhập backend trả về)
-                const userData = JSON.parse(localStorage.getItem('userData')) || {};
-                updateBalanceUI(userData.walletBalance || 0);
-            }
+            const userData = JSON.parse(localStorage.getItem('userData')) || {};
+            updateBalanceUI(userData.walletBalance || 0);
         }
 
         function updateBalanceUI(value) {
             let finalValue = 0;
             if (typeof value === 'object') {
-                finalValue = value.balance ?? value.newBalance ?? value.currentBalance ?? value.walletBalance ?? 0;
+                // 🔴 SỬA Ở ĐÂY: Lấy đúng trường currentBalance trả về từ PaymentDTO
+                finalValue = value.currentBalance ?? value.walletBalance ?? 0;
             } else {
                 finalValue = value;
             }
             document.getElementById('userBalance').innerText = parseInt(finalValue).toLocaleString() + ' P';
-            
-            // Cập nhật lại cả trong localStorage để các trang khác dùng
+
+            // Cập nhật lại cả trong localStorage để các trang khác (Thuê xe) dùng
             const userData = JSON.parse(localStorage.getItem('userData')) || {};
             userData.walletBalance = finalValue;
             localStorage.setItem('userData', JSON.stringify(userData));
@@ -129,8 +113,8 @@
 
         async function handleAction(type) {
             if(isProcessing) return;
-            
-            const userId = getCurrentUserId(); // LẤY ID ĐỘNG CỦA USER ĐANG ĐĂNG NHẬP
+
+            const userId = getCurrentUserId();
             if (!userId) return;
 
             isProcessing = true;
@@ -140,14 +124,24 @@
             btn.disabled = true;
 
             try {
-                let url = type === 'deposit' ? `${API_BASE_URL}/apiv1/payment/topup` : `${API_BASE_URL}/apiv1/payment/withdraw`;
-                // GỬI ĐÚNG USER ID LÊN BACKEND
-                let body = type === 'deposit' 
-                    ? { userId: userId, amountVnd: selectedPriceVnd } 
-                    : { userId: userId, pointsToWithdraw: parseInt(document.getElementById('withdrawAmount').value) || 0 };
+                let url = '';
+                let body = {};
 
-                if (type === 'withdraw' && body.pointsToWithdraw < 10000) {
-                    throw new Error("Số tiền rút tối thiểu là 10.000 P");
+                if (type === 'deposit') {
+                    url = `${API_BASE_URL}/apiv1/payment/topup`;
+                    body = { userId: userId, amountVnd: selectedPriceVnd };
+                } else if (type === 'withdraw') {
+                    const amountToWithdraw = parseInt(document.getElementById('withdrawAmount').value) || 0;
+
+                    if (amountToWithdraw < 67) {
+                        throw new Error("Số điểm rút tối thiểu là 67P");
+                    }
+
+                    // 🔴 SỬA LẠI ĐỂ KHỚP VỚI PAYMENT PACKAGE
+                    // 1. URL gọi đến /apiv1/payment/withdraw
+                    url = `${API_BASE_URL}/apiv1/payment/withdraw`;
+                    // 2. Key phải là 'pointsToWithdraw' để khớp với PaymentDTO.WithdrawRequest bên Backend
+                    body = { userId: userId, pointsToWithdraw: amountToWithdraw };
                 }
 
                 const response = await fetch(url, {
@@ -159,8 +153,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    updateBalanceUI(data); 
-                    showToast('success', 'Thành công', data.message || 'Giao dịch hoàn tất');
+                    updateBalanceUI(data); // data sẽ chứa currentBalance từ TopupResponse hoặc WithdrawResponse
+                    showToast('success', 'Thành công', data.message || 'Giao dịch thành công!');
                     if(type === 'withdraw') document.getElementById('withdrawAmount').value = '';
                 } else {
                     showToast('error', 'Lỗi', data.message || 'Giao dịch thất bại');
@@ -200,7 +194,7 @@
         }
 
         window.onload = () => {
-            fetchCurrentBalance(); // Lấy số dư thật ngay khi mở trang
+            fetchCurrentBalance();
             selectPkg(document.querySelector('.pkg-card'), 10000, 10000);
         };
     </script>

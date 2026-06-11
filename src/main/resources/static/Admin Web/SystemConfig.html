@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cấu hình hệ thống - ECOPARK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .sidebar { width: 250px; background-color: #1f2937; color: white; height: 100vh; padding-top: 20px; position: fixed; }
+        .sidebar h2 { text-align: center; color: #4ade80; margin-bottom: 30px; font-size: 24px; }
+        .sidebar a { display: block; color: #d1d5db; text-decoration: none; padding: 15px 25px; transition: 0.3s; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #374151; color: white; border-left-color: #4ade80; }
+        .main-content { margin-left: 250px; flex: 1; padding: 30px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>ECOPARK</h2>
+    <a href="AdminPage.html">Dashboard</a>
+    <a href="UserManagement.html">Quản lý User/Mgr</a>
+    <a href="StationManagement.html">Quản lý Trạm</a>
+    <a href="ModifyBikeLists.html">Quản lý Xe</a>
+    <a href="SystemConfig.html" class="active">Cấu hình hệ thống</a>
+</div>
+
+<div class="main-content">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800">Cấu hình hệ thống</h1>
+        <p class="text-sm text-gray-500 mt-1">Quản lý bảng giá và thời gian hoạt động của bãi xe</p>
+    </div>
+
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg flex items-start gap-3">
+        <i class="fas fa-sync-alt text-blue-500 mt-1"></i>
+        <div>
+            <p class="font-bold text-blue-800">Tự động đồng bộ</p>
+            <p class="text-sm text-blue-600">Khi bấm Lưu, bảng giá sẽ được cập nhật ngay lập tức. Lần tới Customer bấm Thuê xe, hệ thống sẽ tính tiền theo giá mới.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- CẤU HÌNH GIÁ -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <i class="fas fa-money-bill-wave text-green-600"></i> BẢNG GIÁ XE
+            </h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">XE ĐƠN (VND / giờ)</label>
+                    <input type="number" id="singleBikePrice" min="0" step="1000" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-lg font-bold rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="VD: 50000">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">XE ĐÔI (VND / giờ)</label>
+                    <input type="number" id="doubleBikePrice" min="0" step="1000" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-lg font-bold rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="VD: 20000">
+                </div>
+                <!-- 🔴 THÊM CẤU HÌNH XE ĐIỆN -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">XE ĐIỆN (VND / giờ)</label>
+                    <input type="number" id="electricBikePrice" min="0" step="1000" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-lg font-bold rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="VD: 30000">
+                </div>
+            </div>
+        </div>
+
+        <!-- GIỜ HOẠT ĐỘNG -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <i class="fas fa-clock text-blue-600"></i> GIỜ HOẠT ĐỘNG
+            </h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Giờ MỞ CỬA</label>
+                    <input type="time" id="openHour" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-lg font-bold rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Giờ ĐÓNG CỬA</label>
+                    <input type="time" id="closeHour" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-lg font-bold rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8">
+        <button onclick="saveConfig()" id="btnSave" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg transition-all text-lg">
+            <i class="fas fa-save mr-2"></i> LƯU CẤU HÌNH
+        </button>
+    </div>
+</div>
+
+<script>
+    const API = "http://localhost:8080/apiv1/admin/config";
+
+    async function loadConfig() {
+        try {
+            const res = await fetch(API);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('singleBikePrice').value = data.singleBikePrice;
+                document.getElementById('doubleBikePrice').value = data.doubleBikePrice;
+                document.getElementById('electricBikePrice').value = data.electricBikePrice; // 🔴 LẤY GIÁ XE ĐIỆN
+                document.getElementById('openHour').value = data.openHour;
+                document.getElementById('closeHour').value = data.closeHour;
+            } else {
+                console.error("Lỗi khi tải cấu hình");
+            }
+        } catch (e) {
+            console.error("Lỗi kết nối Backend:", e);
+        }
+    }
+
+    async function saveConfig() {
+        const btn = document.getElementById('btnSave');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang lưu...';
+        btn.disabled = true;
+
+        const payload = {
+            singleBikePrice: parseInt(document.getElementById('singleBikePrice').value) || 0,
+            doubleBikePrice: parseInt(document.getElementById('doubleBikePrice').value) || 0,
+            electricBikePrice: parseInt(document.getElementById('electricBikePrice').value) || 0, // 🔴 GỬI GIÁ XE ĐIỆN
+            openHour: document.getElementById('openHour').value,
+            closeHour: document.getElementById('closeHour').value
+        };
+
+        if (payload.singleBikePrice <= 0 || payload.doubleBikePrice <= 0 || payload.electricBikePrice <= 0) {
+            alert("Giá xe phải lớn hơn 0!");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        try {
+            const res = await fetch(API, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const text = await res.text();
+            if (res.ok) {
+                alert("✅ " + text + "\nBảng giá đã được đồng bộ cho Customer!");
+            } else {
+                alert("❌ Lỗi: " + text);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối Backend!");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = loadConfig;
+</script>
+</body>
+</html>

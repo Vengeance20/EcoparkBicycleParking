@@ -1,5 +1,6 @@
 package com.group13.ecopark_bicycle_parking.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -57,15 +58,12 @@ public class UserDTO {
 
         private String nationalId;
         private String phoneNumber;
+
+        // 🔴 THÊM TRƯỜNG NÀY ĐỂ FRONTEND GỬI MÃ CƯ DÂN LÊN
+        private String residentCode;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class VerifyCardRequest {
-        @NotBlank
-        private String cardUserId;
-    }
+    // 🔴 XÓA VerifyCardRequest VÌ ĐÃ GỘP VÀO UPDATE PROFILE
 
     @Data
     @Builder
@@ -80,5 +78,14 @@ public class UserDTO {
         private String phoneNumber;
         private String role;
         private BigDecimal walletBalance;
+
+        @JsonProperty("isLocked")
+        private boolean isLocked;
+
+        // 🔴 THÊM 2 TRƯỜNG NÀY ĐỂ FRONTEND BIẾT USER LÀ CƯ DÂN VÀ ĐƯỢC GIẢM BAO NHIÊU %
+        @JsonProperty("isResident")
+        private boolean isResident;
+
+        private double discount; // Sẽ là 0.4 nếu là cư dân, 0.0 nếu không phải
     }
 }

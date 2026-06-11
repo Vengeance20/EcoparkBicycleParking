@@ -89,83 +89,83 @@
         </button>
     </nav>
 
-<script>
-    const API_BASE = "http://localhost:8080/apiv1";
-    let stationsData = [];
-    let bikesData = []; // Lưu trữ danh sách xe
-    let map;
+    <script>
+        const API_BASE = "http://localhost:8080/apiv1";
+        let stationsData = [];
+        let bikesData = []; // Lưu trữ danh sách xe
+        let map;
 
-    function initMap() {
-        map = L.map('map').setView([21.008, 105.864], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-    }
-
-    // ==========================================
-    // 1. FETCH CẢ TRẠM VÀ XE ĐỒNG THỜI
-    // ==========================================
-    async function fetchData() {
-        const container = document.getElementById('stationContainer');
-        const countDisplay = document.getElementById('resultCount');
-        container.innerHTML = `<div class="flex flex-col items-center justify-center py-10 text-slate-400"><div class="animate-spin rounded-full h-10 w-10 border-4 border-emerald-500 border-t-transparent mb-4"></div><p class="font-medium text-sm">Đang tải dữ liệu...</p></div>`;
-        
-        try {
-            // Gọi song song 2 API để tăng tốc độ tải trang
-            const [stationsRes, bikesRes] = await Promise.all([
-                fetch(`${API_BASE}/search/stations`),
-                fetch(`${API_BASE}/vehicles/public`)
-            ]);
-
-            if (!stationsRes.ok) throw new Error('Lỗi tải trạm');
-            
-            stationsData = await stationsRes.json();
-            if (bikesRes.ok) bikesData = await bikesRes.json(); // Lưu danh sách xe
-
-            countDisplay.innerText = `Tìm thấy ${stationsData.length} trạm`;
-            addMarkersToMap(stationsData);
-            renderList(stationsData);
-            
-        } catch (error) {
-            container.innerHTML = `<div class="bg-rose-50 border-2 border-rose-100 p-8 rounded-[2rem] text-center"><h3 class="font-black text-rose-800 text-lg">MẤT KẾT NỐI</h3></div>`;
-            countDisplay.innerText = "Lỗi kết nối";
+        function initMap() {
+            map = L.map('map').setView([21.008, 105.864], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
         }
-    }
 
-    function addMarkersToMap(stations) {
-        map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
-        stations.forEach(s => {
-            const lat = parseFloat(s.latitude); const lng = parseFloat(s.longitude);
-            if (isNaN(lat) || isNaN(lng)) return;
-            let iconClass = 'custom-marker' + (s.status === 'MAINTENANCE' ? ' maintenance' : '');
-            const customIcon = L.divIcon({ className: '', html: `<div class="${iconClass}"><i class="fas fa-bicycle"></i></div>`, iconSize: [32, 32], iconAnchor: [16, 16] });
-            const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-            marker.bindPopup(`<b>${s.name}</b><br>Sức chứa: ${s.capacity} xe`);
-            // Bấm vào Marker cũng mở Modal xem xe
-            marker.on('click', () => openBikeModal(s.stationId || s.id, s.name));
-        });
-        if (stations.length > 0) {
-            const bounds = stations.filter(s => !isNaN(parseFloat(s.latitude))).map(s => [parseFloat(s.latitude), parseFloat(s.longitude)]);
-            map.fitBounds(bounds, { padding: [50, 50] });
+        // ==========================================
+        // 1. FETCH CẢ TRẠM VÀ XE ĐỒNG THỜI
+        // ==========================================
+        async function fetchData() {
+            const container = document.getElementById('stationContainer');
+            const countDisplay = document.getElementById('resultCount');
+            container.innerHTML = `<div class="flex flex-col items-center justify-center py-10 text-slate-400"><div class="animate-spin rounded-full h-10 w-10 border-4 border-emerald-500 border-t-transparent mb-4"></div><p class="font-medium text-sm">Đang tải dữ liệu...</p></div>`;
+
+            try {
+                // Gọi song song 2 API để tăng tốc độ tải trang
+                const [stationsRes, bikesRes] = await Promise.all([
+                    fetch(`${API_BASE}/search/stations`),
+                    fetch(`${API_BASE}/vehicles/public`)
+                ]);
+
+                if (!stationsRes.ok) throw new Error('Lỗi tải trạm');
+
+                stationsData = await stationsRes.json();
+                if (bikesRes.ok) bikesData = await bikesRes.json(); // Lưu danh sách xe
+
+                countDisplay.innerText = `Tìm thấy ${stationsData.length} trạm`;
+                addMarkersToMap(stationsData);
+                renderList(stationsData);
+
+            } catch (error) {
+                container.innerHTML = `<div class="bg-rose-50 border-2 border-rose-100 p-8 rounded-[2rem] text-center"><h3 class="font-black text-rose-800 text-lg">MẤT KẾT NỐI</h3></div>`;
+                countDisplay.innerText = "Lỗi kết nối";
+            }
         }
-    }
 
-    // ==========================================
-    // 2. HIỂN THỊ DANH SÁCH TRẠM
-    // ==========================================
-    function renderList(list) {
-        const container = document.getElementById('stationContainer');
-        if (list.length === 0) { container.innerHTML = `<p class="text-center text-slate-400 py-10">Không có trạm nào.</p>`; return; }
+        function addMarkersToMap(stations) {
+            map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+            stations.forEach(s => {
+                const lat = parseFloat(s.latitude); const lng = parseFloat(s.longitude);
+                if (isNaN(lat) || isNaN(lng)) return;
+                let iconClass = 'custom-marker' + (s.status === 'MAINTENANCE' ? ' maintenance' : '');
+                const customIcon = L.divIcon({ className: '', html: `<div class="${iconClass}"><i class="fas fa-bicycle"></i></div>`, iconSize: [32, 32], iconAnchor: [16, 16] });
+                const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                marker.bindPopup(`<b>${s.name}</b><br>Sức chứa: ${s.capacity} xe`);
+                // Bấm vào Marker cũng mở Modal xem xe
+                marker.on('click', () => openBikeModal(s.stationId || s.id, s.name));
+            });
+            if (stations.length > 0) {
+                const bounds = stations.filter(s => !isNaN(parseFloat(s.latitude))).map(s => [parseFloat(s.latitude), parseFloat(s.longitude)]);
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
 
-        container.innerHTML = list.map(s => {
-            const name = s.name || 'Chưa đặt tên';
-            const capacity = s.capacity || 0;
-            const status = s.status || 'AVAILABLE';
-            const lat = parseFloat(s.latitude).toFixed(4);
-            const lng = parseFloat(s.longitude).toFixed(4);
-            const statusColor = status === 'MAINTENANCE' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600';
-            const statusText = status === 'MAINTENANCE' ? 'Bảo trì' : 'Hoạt động';
-            const stationId = s.stationId || s.id;
+        // ==========================================
+        // 2. HIỂN THỊ DANH SÁCH TRẠM
+        // ==========================================
+        function renderList(list) {
+            const container = document.getElementById('stationContainer');
+            if (list.length === 0) { container.innerHTML = `<p class="text-center text-slate-400 py-10">Không có trạm nào.</p>`; return; }
 
-            return `
+            container.innerHTML = list.map(s => {
+                const name = s.name || 'Chưa đặt tên';
+                const capacity = s.capacity || 0;
+                const status = s.status || 'AVAILABLE';
+                const lat = parseFloat(s.latitude).toFixed(4);
+                const lng = parseFloat(s.longitude).toFixed(4);
+                const statusColor = status === 'MAINTENANCE' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600';
+                const statusText = status === 'MAINTENANCE' ? 'Bảo trì' : 'Hoạt động';
+                const stationId = s.stationId || s.id;
+
+                return `
             <div class="station-card bg-white p-5 rounded-[2rem] shadow-sm flex justify-between items-center">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-2">
@@ -189,37 +189,36 @@
                     </div>
                 </div>
 
-                <button onclick="openBikeModal(${stationId}, '${name}')" 
+                <button onclick="openBikeModal(${stationId}, '${name}')"
                     class="bg-emerald-500 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 active:scale-90 transition-transform ml-4">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>`;
-        }).join('');
-    }
+            }).join('');
+        }
 
-    // ==========================================
-    // 3. MODAL XEM XE TẠI TRẠM (FETCH & FILTER)
-    // ==========================================
-    function openBikeModal(stationId, stationName) {
-        document.getElementById('modalTitle').innerText = `Xe tại trạm: ${stationName}`;
-        
-        // Lọc ra những xe có stationId khớp với trạm được bấm
-        // Xử lý linh hoạt: bike.stationId hoặc bike.station.stationId
-        const bikesInStation = bikesData.filter(b => {
-            const bStationId = b.stationId || (b.station && b.station.stationId);
-            return bStationId === stationId;
-        });
+        // ==========================================
+        // 3. MODAL XEM XE TẠI TRẠM (FETCH & FILTER)
+        // ==========================================
+        function openBikeModal(stationId, stationName) {
+            document.getElementById('modalTitle').innerText = `Xe tại trạm: ${stationName}`;
 
-        const bikeContainer = document.getElementById('bikeListContainer');
+            // Lọc ra những xe có stationId khớp với trạm được bấm
+            const bikesInStation = bikesData.filter(b => {
+                const bStationId = b.stationId || (b.station && b.station.stationId);
+                return bStationId === stationId;
+            });
 
-        if (bikesInStation.length === 0) {
-            bikeContainer.innerHTML = `<p class="text-center text-slate-400 py-10">Không có xe nào tại trạm này.</p>`;
-        } else {
-            bikeContainer.innerHTML = bikesInStation.map(bike => {
-                const statusColor = bike.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-600' : (bike.status === 'MAINTENANCE' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600');
-                const statusIcon = bike.status === 'AVAILABLE' ? 'fa-check-circle' : (bike.status === 'MAINTENANCE' ? 'fa-wrench' : 'fa-bicycle');
-                
-                return `
+            const bikeContainer = document.getElementById('bikeListContainer');
+
+            if (bikesInStation.length === 0) {
+                bikeContainer.innerHTML = `<p class="text-center text-slate-400 py-10">Không có xe nào tại trạm này.</p>`;
+            } else {
+                bikeContainer.innerHTML = bikesInStation.map(bike => {
+                    const statusColor = bike.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-600' : (bike.status === 'MAINTENANCE' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600');
+                    const statusIcon = bike.status === 'AVAILABLE' ? 'fa-check-circle' : (bike.status === 'MAINTENANCE' ? 'fa-wrench' : 'fa-bicycle');
+
+                    return `
                 <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl ${statusColor} flex items-center justify-center text-xl">
@@ -232,49 +231,60 @@
                     </div>
                     <span class="text-[10px] font-black uppercase px-3 py-1 rounded-lg ${statusColor}">${bike.status}</span>
                 </div>`;
-            }).join('');
+                }).join('');
+            }
+
+            // Hiện Modal với hiệu ứng trượt lên
+            document.getElementById('overlay').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('overlay').classList.add('opacity-100');
+                document.getElementById('bikeModal').classList.add('active');
+            }, 10);
         }
 
-        // Hiện Modal với hiệu ứng trượt lên
-        document.getElementById('overlay').classList.remove('hidden');
-        setTimeout(() => {
-            document.getElementById('overlay').classList.add('opacity-100');
-            document.getElementById('bikeModal').classList.add('active');
-        }, 10);
-    }
+        function closeModal() {
+            document.getElementById('bikeModal').classList.remove('active');
+            document.getElementById('overlay').classList.remove('opacity-100');
+            setTimeout(() => { document.getElementById('overlay').classList.add('hidden'); }, 300);
+        }
 
-    function closeModal() {
-        document.getElementById('bikeModal').classList.remove('active');
-        document.getElementById('overlay').classList.remove('opacity-100');
-        setTimeout(() => { document.getElementById('overlay').classList.add('hidden'); }, 300);
-    }
+        // ==========================================
+        // 4. GPS & SEARCH (ĐÃ SỬA LỖI)
+        // ==========================================
+        function locateMe() {
+            if (!navigator.geolocation) { alert("Trình duyệt không hỗ trợ GPS!"); return; }
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    map.flyTo([pos.coords.latitude, pos.coords.longitude], 16);
+                    L.circleMarker([pos.coords.latitude, pos.coords.longitude], { radius: 8, fillColor: "#3b82f6", color: "#ffffff", weight: 3 }).addTo(map).bindPopup("Vị trí của bạn").openPopup();
+                },
+                () => { alert("Không lấy được vị trí."); }
+            );
+        }
 
-    // ==========================================
-    // 4. GPS & SEARCH
-    // ==========================================
-    function locateMe() {
-        if (!navigator.geolocation) { alert("Trình duyệt không hỗ trợ GPS!"); return; }
-        navigator.geolocation.getCurrentPosition(
-            pos => {
-                map.flyTo([pos.coords.latitude, pos.coords.longitude], 16);
-                L.circleMarker([pos.coords.latitude, pos.coords.longitude], { radius: 8, fillColor: "#3b82f6", color: "#ffffff", weight: 3 }).addTo(map).bindPopup("Vị trí của bạn").openPopup();
-            },
-            () => { alert("Không lấy được vị trí."); }
-        );
-    }
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
 
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        renderStationList(stationsData.filter(s => (s.name || '').toLowerCase().includes(val)));
-    });
+            // Lọc danh sách trạm theo từ khóa
+            const filteredStations = stationsData.filter(s => (s.name || '').toLowerCase().includes(val));
 
-    // ==========================================
-    // INIT
-    // ==========================================
-    window.onload = () => {
-        initMap();
-        fetchData();
-    };
-</script>
+            // 🔴 SỬA TÊN HÀM TỪ renderStationList SANG renderList
+            renderList(filteredStations);
+
+            // Cập nhật lại Marker trên bản đồ cho khớp với kết quả tìm kiếm
+            addMarkersToMap(filteredStations);
+
+            // Cập nhật lại số lượng trạm tìm thấy
+            document.getElementById('resultCount').innerText = `Tìm thấy ${filteredStations.length} trạm`;
+        });
+
+        // ==========================================
+        // INIT
+        // ==========================================
+        window.onload = () => {
+            initMap();
+            fetchData();
+        };
+    </script>
 </body>
 </html>

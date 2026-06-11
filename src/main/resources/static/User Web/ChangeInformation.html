@@ -22,90 +22,115 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-    <!-- HEADER -->
-    <nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-2 text-green-600 font-bold text-xl">
-            <i class="fas fa-bicycle"></i>
-            <span>ECOPARK BIKES</span>
-        </div>
-        <button onclick="logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-all">
-            <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất
-        </button>
-    </nav>
+<!-- HEADER -->
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center gap-2 text-green-600 font-bold text-xl">
+        <i class="fas fa-bicycle"></i>
+        <span>ECOPARK BIKES</span>
+    </div>
+    <button onclick="logout()" class="text-red-500 font-bold text-sm hover:text-red-700 transition-all">
+        <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất
+    </button>
+</nav>
 
-    <!-- MAIN PROFILE LAYOUT -->
-    <main class="max-w-5xl mx-auto p-6 mt-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- CỘT TRÁI: THẺ AVATAR & THÔNG TIN -->
-            <div class="space-y-6">
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col items-center text-center">
-                    <div class="w-28 h-28 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center text-5xl font-bold shadow-lg mb-4 border-4 border-white" id="bigAvatar">?</div>
-                    <h2 class="text-xl font-black text-slate-800" id="displayName">Người dùng mới</h2>
-                    <p class="text-sm text-slate-400 mt-1 uppercase font-bold" id="displayRole">CUSTOMER</p>
-                    
-                    <div class="mt-6 w-full space-y-3 text-left text-sm">
-                        <div class="flex items-center gap-3 text-slate-600">
-                            <i class="fas fa-envelope w-5 text-slate-400"></i>
-                            <span id="displayEmail" class="truncate">Chưa cập nhật</span>
-                        </div>
-                        <div class="flex items-center gap-3 text-slate-600">
-                            <i class="fas fa-phone w-5 text-slate-400"></i>
-                            <span id="displayPhone">Chưa cập nhật</span>
-                        </div>
-                        <div class="flex items-center gap-3 text-slate-600">
-                            <i class="fas fa-id-card w-5 text-slate-400"></i>
-                            <span id="displayNationalId">Chưa cập nhật</span>
+<!-- MAIN PROFILE LAYOUT -->
+<main class="max-w-5xl mx-auto p-6 mt-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- CỘT TRÁI: THẺ AVATAR & THÔNG TIN -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 flex flex-col items-center text-center">
+                <div class="w-28 h-28 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center text-5xl font-bold shadow-lg mb-4 border-4 border-white" id="bigAvatar">?</div>
+                <h2 class="text-xl font-black text-slate-800" id="displayName">Người dùng mới</h2>
+                <p class="text-sm text-slate-400 mt-1 uppercase font-bold" id="displayRole">CUSTOMER</p>
+
+                <!-- 🔴 BADGE CƯ DÂN ECOPARK -->
+                <div id="residentBadge" class="hidden mt-3 bg-green-100 text-green-700 text-xs font-bold px-4 py-1.5 rounded-full border border-green-200 shadow-sm">
+                    <i class="fas fa-home mr-1"></i> Cư dân Ecopark (-40%)
+                </div>
+
+                <div class="mt-6 w-full space-y-3 text-left text-sm">
+                    <div class="flex items-center gap-3 text-slate-600">
+                        <i class="fas fa-envelope w-5 text-slate-400"></i>
+                        <span id="displayEmail" class="truncate">Chưa cập nhật</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-slate-600">
+                        <i class="fas fa-phone w-5 text-slate-400"></i>
+                        <span id="displayPhone">Chưa cập nhật</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-slate-600">
+                        <i class="fas fa-id-card w-5 text-slate-400"></i>
+                        <span id="displayNationalId">Chưa cập nhật</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: FORM XEM CHỈNH SỬA -->
+        <div class="md:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+            <h3 class="font-bold text-lg border-l-4 border-green-500 pl-3 mb-6 uppercase tracking-wide text-slate-800">Thông tin cá nhân</h3>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-user mr-1"></i> Họ và tên</label>
+                    <input type="text" id="inputFullName" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập họ và tên của bạn">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-phone mr-1"></i> Số điện thoại</label>
+                        <input type="tel" id="inputPhoneNumber" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập SĐT">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-id-card mr-1"></i> Căn cước công dân</label>
+                        <input type="text" id="inputNationalId" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập CCCD">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-envelope mr-1"></i> Email</label>
+                    <input type="email" id="inputEmail" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập Email">
+                </div>
+
+                <!-- 🔴 PHẦN XÁC THỰC CƯ DÂN -->
+                <div id="residentSection" class="pt-4 border-t border-dashed border-gray-200">
+                    <label class="block text-xs font-bold text-green-600 uppercase mb-2">
+                        <i class="fas fa-shield-alt mr-1"></i> Xác thực Cư dân (Giảm 40% phí thuê xe)
+                    </label>
+                    <!-- Nếu chưa xác thực: Hiện ô nhập mã -->
+                    <div id="unverifiedForm">
+                        <input type="text" id="inputResidentCode" class="w-full bg-green-50 border border-green-100 rounded-xl p-3.5 font-bold transition-all text-green-800 placeholder-green-400" placeholder="Nhập mã cư dân (Ví dụ: ECO-01)">
+                        <p class="text-xs text-gray-400 mt-1.5">Định dạng: <span class="font-bold text-green-600">ECO-{ID của bạn}</span>. Ví dụ ID của bạn là 1, nhập ECO-01 hoặc ECO-1</p>
+                    </div>
+                    <!-- Nếu đã xác thực: Hiện thông báo -->
+                    <div id="verifiedForm" class="hidden bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-bold text-sm flex items-center gap-3">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                        <div>
+                            <p>Tài khoản đã xác thực Cư dân!</p>
+                            <p class="text-xs font-normal text-green-600">Bạn sẽ tự động được giảm 40% khi thanh toán thuê xe.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- CỘT PHẢI: FORM XEM CHỈNH SỬA -->
-            <div class="md:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                <h3 class="font-bold text-lg border-l-4 border-green-500 pl-3 mb-6 uppercase tracking-wide text-slate-800">Thông tin cá nhân</h3>
-                
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-user mr-1"></i> Họ và tên</label>
-                        <input type="text" id="inputFullName" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập họ và tên của bạn">
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-phone mr-1"></i> Số điện thoại</label>
-                            <input type="tel" id="inputPhoneNumber" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập SĐT">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-id-card mr-1"></i> Căn cước công dân</label>
-                            <input type="text" id="inputNationalId" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập CCCD">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-envelope mr-1"></i> Email</label>
-                        <input type="email" id="inputEmail" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 font-bold transition-all" placeholder="Nhập Email">
-                    </div>
-                </div>
-
-                <button onclick="saveProfile()" id="btnSave" class="w-full mt-8 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-green-600 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2">
-                    <i class="fas fa-save"></i> Lưu thông tin
-                </button>
-            </div>
-        </div>
-    </main>
-
-    <div id="toast">
-        <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center"><i id="faIcon" class="fas"></i></div>
-        <div>
-            <p id="toastTitle" class="font-bold"></p>
-            <p id="toastDesc" class="text-xs opacity-80"></p>
+            <button onclick="saveProfile()" id="btnSave" class="w-full mt-8 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-green-600 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> Lưu thông tin
+            </button>
         </div>
     </div>
+</main>
+
+<div id="toast">
+    <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center"><i id="faIcon" class="fas"></i></div>
+    <div>
+        <p id="toastTitle" class="font-bold"></p>
+        <p id="toastDesc" class="text-xs opacity-80"></p>
+    </div>
+</div>
 
 <script>
     const API_BASE_URL = "http://localhost:8080/apiv1/auth";
-    let initialData = {}; 
+    let initialData = {};
 
     function showToast(type, title, desc) {
         const toast = document.getElementById('toast');
@@ -120,8 +145,7 @@
     function logout() {
         localStorage.removeItem('userData');
         localStorage.removeItem('token');
-        // Đường dẫn quay về trang login (do file này nằm trong thư mục User Web)
-        window.location.href = '../RegisterLoginPage.html'; 
+        window.location.href = '../RegisterLoginPage.html';
     }
 
     function updateDisplay(user) {
@@ -131,18 +155,29 @@
         document.getElementById('displayPhone').innerText = user.phoneNumber || 'Chưa cập nhật';
         document.getElementById('displayNationalId').innerText = user.nationalId || 'Chưa cập nhật';
         document.getElementById('displayRole').innerText = user.role || 'CUSTOMER';
-        
+
         const avatarLetter = fullName !== 'Người dùng mới' ? fullName.charAt(0).toUpperCase() : '?';
         document.getElementById('bigAvatar').innerText = avatarLetter;
+
+        // 🔴 CẬP NHẬT GIAO DIỆN XÁC THỰC CƯ DÂN
+        if(user.isResident === true) {
+            document.getElementById('residentBadge').classList.remove('hidden'); // Hiện badge cột trái
+            document.getElementById('unverifiedForm').classList.add('hidden');   // Ẩn ô nhập mã
+            document.getElementById('verifiedForm').classList.remove('hidden');  // Hiện thông báo đã xác thực
+        } else {
+            document.getElementById('residentBadge').classList.add('hidden');
+            document.getElementById('unverifiedForm').classList.remove('hidden');
+            document.getElementById('verifiedForm').classList.add('hidden');
+        }
     }
 
     function loadInitialData() {
         const userData = JSON.parse(localStorage.getItem('userData')) || {};
-        
+
         if (!userData.userId) {
             showToast('error', 'Lỗi', 'Bạn chưa đăng nhập!');
-            setTimeout(() => { 
-                window.location.href = '../RegisterLoginPage.html'; 
+            setTimeout(() => {
+                window.location.href = '../RegisterLoginPage.html';
             }, 2000);
             return;
         }
@@ -151,13 +186,15 @@
             fullName: userData.fullName || '',
             phoneNumber: userData.phoneNumber || '',
             email: userData.email || '',
-            nationalId: userData.nationalId || ''
+            nationalId: userData.nationalId || '',
+            residentCode: '' // Mã cư dân không load từ DB ra, chỉ nhập khi cần xác thực
         };
 
         document.getElementById('inputFullName').value = initialData.fullName;
         document.getElementById('inputPhoneNumber').value = initialData.phoneNumber;
         document.getElementById('inputEmail').value = initialData.email;
         document.getElementById('inputNationalId').value = initialData.nationalId;
+        document.getElementById('inputResidentCode').value = ''; // Luôn để trống ô mã cư dân
 
         updateDisplay(userData);
     }
@@ -171,16 +208,19 @@
             fullName: document.getElementById('inputFullName').value,
             phoneNumber: document.getElementById('inputPhoneNumber').value,
             email: document.getElementById('inputEmail').value,
-            nationalId: document.getElementById('inputNationalId').value
+            nationalId: document.getElementById('inputNationalId').value,
+            residentCode: document.getElementById('inputResidentCode').value.trim() // 🔴 LẤY MÃ CƯ DÂN
         };
 
-        if (currentData.fullName === initialData.fullName && 
-            currentData.phoneNumber === initialData.phoneNumber && 
-            currentData.email === initialData.email && 
-            currentData.nationalId === initialData.nationalId) {
-            
+        // Kiểm tra xem có sự thay đổi nào không (bao gồm cả mã cư dân)
+        if (currentData.fullName === initialData.fullName &&
+            currentData.phoneNumber === initialData.phoneNumber &&
+            currentData.email === initialData.email &&
+            currentData.nationalId === initialData.nationalId &&
+            currentData.residentCode === '') {
+
             showToast('info', 'Không có thay đổi', 'Bạn chưa thay đổi thông tin nào để lưu.');
-            return; 
+            return;
         }
 
         const btn = document.getElementById('btnSave');
@@ -191,25 +231,30 @@
             const res = await fetch(`${API_BASE_URL}/update-profile/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentData)
+                body: JSON.stringify(currentData) // Gửi kèm residentCode
             });
 
             if (res.ok) {
-                const updatedUser = await res.json(); 
-                
+                const updatedUser = await res.json();
+
+                // Cập nhật lại toàn bộ localStorage (Backend đã lưu isResident = true vào DB)
                 localStorage.setItem('userData', JSON.stringify(updatedUser));
-                
+
                 initialData = {
                     fullName: updatedUser.fullName || '',
                     phoneNumber: updatedUser.phoneNumber || '',
                     email: updatedUser.email || '',
-                    nationalId: updatedUser.nationalId || ''
+                    nationalId: updatedUser.nationalId || '',
+                    residentCode: ''
                 };
 
+                // Cập nhật lại giao diện (Sẽ hiện Badge Cư dân nếu xác thực thành công)
                 updateDisplay(updatedUser);
-                
+                document.getElementById('inputResidentCode').value = '';
+
                 showToast('success', 'Cập nhật thành công', 'Đã lưu vào Database!');
             } else {
+                // 🔴 Nếu Backend trả về lỗi (VD: Mã cư dân sai)
                 const errMsg = await res.text();
                 showToast('error', 'Cập nhật thất bại', errMsg);
             }
