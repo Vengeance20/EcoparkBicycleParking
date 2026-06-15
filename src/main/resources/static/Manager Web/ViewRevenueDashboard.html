@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Manager - Revenue Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #time-indicator {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 0;
+        }
+        .time-btn { position: relative; z-index: 10; transition: color 0.3s; }
+        .stat-card { transition: transform 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen">
+
+    <nav class="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 text-[#00a859] font-bold text-xl">
+            <i class="fas fa-wallet"></i>
+            <span>Ecopark Finance</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <!-- THÊM ONCLICK VÀO NÚT EXPORT -->
+            <button onclick="exportReport()" class="bg-gray-100 px-4 py-2 rounded-full text-gray-500 hover:text-green-600 hover:bg-green-50 text-sm font-bold transition-all">
+                <i class="fas fa-file-excel mr-1"></i> Xuất báo cáo
+            </button>
+            <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold">M</div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div>
+                <h2 class="text-3xl font-black text-slate-800">Doanh thu hệ thống</h2>
+                <p id="updateTimeText" class="text-sm text-gray-400">Đang tải dữ liệu...</p>
+            </div>
+
+            <div class="relative bg-gray-200/60 p-1.5 rounded-2xl flex shadow-inner" id="timeGroup">
+                <div id="time-indicator"></div>
+                <button onclick="updateTime(this, 'today')" class="time-btn px-6 py-3 rounded-xl text-xs font-bold text-green-600">Hôm nay</button>
+                <button onclick="updateTime(this, 'week')" class="time-btn px-6 py-3 rounded-xl text-xs font-bold text-gray-400">Tuần này</button>
+                <button onclick="updateTime(this, 'month')" class="time-btn px-6 py-3 rounded-xl text-xs font-bold text-gray-400">Tháng này</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card bg-white p-6 rounded-[35px] shadow-sm border border-gray-100">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Tổng doanh thu</p>
+                <p id="totalRev" class="text-2xl font-black text-green-600">0 P</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-[35px] shadow-sm border border-gray-100">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Số chuyến xe</p>
+                <p id="totalRides" class="text-2xl font-black text-slate-800">0</p>
+            </div>
+            <div class="stat-card bg-white p-6 rounded-[35px] shadow-sm border border-gray-100">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">Trung bình/chuyến</p>
+                <p id="avgRev" class="text-2xl font-black text-slate-800">0 P</p>
+            </div>
+            <div class="stat-card bg-slate-900 p-6 rounded-[35px] shadow-xl">
+                <p class="text-[10px] font-black text-gray-400 uppercase mb-2 text-white/50">Dòng tiền thuần</p>
+                <p id="netAmount" class="text-2xl font-black text-green-400">0 P</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-green-500"></i> Xu hướng doanh thu
+                </h3>
+                <canvas id="revenueChart" height="250"></canvas>
+            </div>
+
+            <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                <h3 class="font-bold text-slate-800 mb-6">Top trạm sinh lời</h3>
+                <div class="space-y-6" id="topStationsContainer">
+                    <p class="text-sm text-gray-400 text-center py-10">Đang tải...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_STATISTICS = "http://localhost:8080/api/statistics";
+        let myChart;
+        let currentReportData = null; // Lưu data để xuất file
+        let currentMode = 'today';    // Lưu khoảng thời gian đang xem
+
+        const formatVND = (amount) => {
+            if (!amount) return '0 P';
+            return new Intl.NumberFormat('vi-VN').format(amount) + ' P';
+        };
+
+        const formatISO = d => d.toISOString().split('T')[0];
+
+        async function fetchStatistics(startDate, endDate) {
+            try {
+                const res = await fetch(`${API_STATISTICS}?startDate=${startDate}&endDate=${endDate}`);
+                if (!res.ok) throw new Error("Lỗi tải dữ liệu");
+                return await res.json();
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi kết nối server thống kê!");
+                return null;
+            }
+        }
+
+        async function updateTime(el, mode) {
+            const indicator = document.getElementById('time-indicator');
+            indicator.style.width = el.offsetWidth + 'px';
+            indicator.style.height = el.offsetHeight + 'px';
+            indicator.style.left = el.offsetLeft + 'px';
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.replace('text-green-600', 'text-gray-400'));
+            el.classList.replace('text-gray-400', 'text-green-600');
+
+            const endDate = new Date();
+            const startDate = new Date();
+            if (mode === 'today') {
+                // Giữ nguyên
+            } else if (mode === 'week') {
+                startDate.setDate(endDate.getDate() - 7);
+            } else if (mode === 'month') {
+                startDate.setDate(endDate.getDate() - 30);
+            }
+
+            const data = await fetchStatistics(formatISO(startDate), formatISO(endDate));
+            if (!data) return;
+
+            // Lưu lại dữ liệu và mode đang xem để Export
+            currentReportData = data;
+            currentMode = mode;
+
+            document.getElementById('totalRev').innerText = formatVND(data.totalRevenue);
+            document.getElementById('totalRides').innerText = data.completedRentals || 0;
+            document.getElementById('avgRev').innerText = formatVND(data.averageRevenuePerRental);
+            document.getElementById('netAmount').innerText = formatVND(data.walletNetAmount);
+            
+            document.getElementById('updateTimeText').innerText = `Cập nhật lúc: ${new Date().toLocaleString('vi-VN')}`;
+
+            const trendLabels = (data.revenueTrend || []).map(d => d.date);
+            const trendData = (data.revenueTrend || []).map(d => d.totalRevenue);
+            updateChart(trendLabels, trendData);
+
+            renderTopStations(data.topStations || []);
+        }
+
+        function updateChart(labels, data) {
+            if (myChart) myChart.destroy();
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (P)',
+                        data: data,
+                        backgroundColor: '#22c55e',
+                        borderRadius: 12,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { display: false },
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('vi-VN').format(value) + ' P';
+                                }
+                            }
+                        }, 
+                        x: { grid: { display: false } } 
+                    }
+                }
+            });
+        }
+
+        function renderTopStations(stations) {
+            const container = document.getElementById('topStationsContainer');
+            if (stations.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-400 text-center py-10">Chưa có dữ liệu</p>`;
+                return;
+            }
+            const maxRevenue = stations[0].totalRevenue || 1;
+            const colors = ['bg-green-500', 'bg-emerald-400', 'bg-teal-400', 'bg-cyan-400'];
+            container.innerHTML = stations.map((s, index) => {
+                const percentage = ((s.totalRevenue / maxRevenue) * 100).toFixed(0);
+                const colorClass = colors[index % colors.length];
+                return `
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm font-bold">
+                        <span class="text-slate-700">${s.stationName}</span>
+                        <span class="text-green-600">${formatVND(s.totalRevenue)}</span>
+                    </div>
+                    <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div class="${colorClass} h-full" style="width: ${percentage}%"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-400">${s.completedRentals || 0} chuyến hoàn thành</p>
+                </div>`;
+            }).join('');
+        }
+
+        // ==========================================
+        // HÀM XUẤT BÁO CÁO CSV (MỞ BẰNG EXCEL)
+        // ==========================================
+        function exportReport() {
+            if (!currentReportData) {
+                alert("Chưa có dữ liệu để xuất báo cáo! Vui lòng đợi tải xong.");
+                return;
+            }
+
+            const endDate = new Date();
+            const startDate = new Date();
+            let modeText = "Hôm nay";
+            if (currentMode === 'week') {
+                startDate.setDate(endDate.getDate() - 7);
+                modeText = "Tuần này";
+            } else if (currentMode === 'month') {
+                startDate.setDate(endDate.getDate() - 30);
+                modeText = "Tháng này";
+            }
+
+            const startStr = formatISO(startDate);
+            const endStr = formatISO(endDate);
+
+            // Tạo cấu trúc file CSV (Dùng BOM để Excel nhận diện tiếng Việt)
+            let csvContent = "\uFEFF"; 
+            csvContent += "BÁO CÁO DOANH THU HỆ THỐNG ECOPARK\n";
+            csvContent += `Khoảng thời gian: ${modeText} (${startStr} đến ${endStr})\n\n`;
+
+            csvContent += "THỐNG KÊ TỔNG QUAN\n";
+            csvContent += `Tổng doanh thu,"${formatVND(currentReportData.totalRevenue)}"\n`;
+            csvContent += `Số chuyến xe,${currentReportData.completedRentals || 0}\n`;
+            csvContent += `Trung bình/chuyến,"${formatVND(currentReportData.averageRevenuePerRental)}"\n`;
+            csvContent += `Dòng tiền thuần,"${formatVND(currentReportData.walletNetAmount)}"\n\n`;
+
+            csvContent += "TOP TRẠM SINH LỜI\n";
+            csvContent += "Tên trạm,Số chuyến hoàn thành,Doanh thu\n";
+            (currentReportData.topStations || []).forEach(s => {
+                csvContent += `"${s.stationName}",${s.completedRentals || 0},"${formatVND(s.totalRevenue)}"\n`;
+            });
+            csvContent += "\n";
+
+            csvContent += "XU HƯỚNG DOANH THU THEO NGÀY\n";
+            csvContent += "Ngày,Số chuyến,Doanh thu,Trung bình\n";
+            (currentReportData.revenueTrend || []).forEach(d => {
+                csvContent += `${d.date},${d.completedRentals || 0},"${formatVND(d.totalRevenue)}","${d.averageRevenue ? formatVND(d.averageRevenue) : '0 P'}"\n`;
+            });
+
+            // Tạo file và tự động download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `BaoCaoDoanhThu_Ecopark_${startStr}_${endStr}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.onload = () => {
+            updateTime(document.querySelector('.time-btn'), 'today');
+        };
+    </script>
+</body>
+</html>

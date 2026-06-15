@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOPARK - Quản Lý Xe</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; background-color: #f3f4f6; color: #374151; }
+
+        .sidebar { width: 250px; background-color: #1f2937; color: white; height: 100vh; padding-top: 20px; position: fixed; }
+        .sidebar h2 { text-align: center; color: #4ade80; margin-bottom: 30px; font-size: 24px; }
+        .sidebar a { display: block; color: #d1d5db; text-decoration: none; padding: 15px 25px; transition: 0.3s; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #374151; color: white; border-left-color: #4ade80; }
+
+        .main-content { margin-left: 250px; flex: 1; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; font-weight: bold; color: #111827; }
+        .header p { font-size: 14px; color: #6b7280; margin-top: 5px; }
+
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background-color: #e5e7eb; }
+        th { padding: 12px 15px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #4b5563; }
+        td { padding: 12px 15px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+        tr:hover td { background-color: #f9fafb; }
+
+        .badge { padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-available { background-color: #dcfce7; color: #16a34a; }
+        .badge-inuse { background-color: #dbeafe; color: #2563eb; }
+        .badge-maintenance { background-color: #fef9c3; color: #ca8a04; }
+
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-add { background-color: #2563eb; padding: 10px 20px; font-size: 14px; }
+        .btn-maintenance { background-color: #f59e0b; }
+        .btn-available { background-color: #22c55e; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; padding: 30px; border-radius: 8px; width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal h2 { margin-bottom: 20px; font-size: 20px; color: #1f2937; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background-color: #6b7280; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>ECOPARK</h2>
+    <a href="AdminPage.html">Dashboard</a>
+    <a href="UserManagement.html">Quản lý User/Mgr</a>
+    <a href="StationManagement.html">Quản lý Trạm</a>
+    <a href="ModifyBikeLists.html" class="active">Quản lý Xe</a>
+</div>
+
+<div class="main-content">
+    <div class="header">
+        <div>
+            <h1>Quản Lý Xe</h1>
+            <p>Thêm mới, bảo trì và theo dõi trạng thái xe đạp</p>
+        </div>
+        <button class="btn btn-add" onclick="openAddModal()">+ Thêm Xe Mới</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Mã Xe</th>
+                <th>Loại xe</th>
+                <th>Trạm hiện tại</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody id="bike-table-body">
+            <tr><td colspan="6" style="text-align: center; padding: 30px;">Đang tải dữ liệu...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL THÊM XE MỚI -->
+<div class="modal-overlay" id="bikeModal">
+    <div class="modal">
+        <h2>Thêm Xe Mới</h2>
+        <div class="form-group">
+            <label>Mã xe / Biển số <span style="color:red;">*</span></label>
+            <input type="text" id="bikeCode" placeholder="VD: ECOPARK-001">
+        </div>
+        <div class="form-group">
+            <label>Loại xe <span style="color:red;">*</span></label>
+            <select id="categorySelect">
+                <option value="">-- Chọn loại xe --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Xếp vào trạm</label>
+            <select id="stationSelect">
+                <option value="">-- Chọn trạm (Bỏ trống nếu chưa xếp) --</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeModal()">Hủy bỏ</button>
+            <button class="btn btn-add" onclick="saveBike()">Thêm Xe</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080/apiv1/vehicles";
+
+    // 1. Lấy danh sách xe
+    async function fetchBikes() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/public`);
+            if (!response.ok) throw new Error("Lỗi kết nối");
+            const bikes = await response.json();
+            renderTable(bikes);
+        } catch (error) {
+            document.getElementById("bike-table-body").innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; color:red; padding: 30px;">
+                        <b>Lỗi kết nối Server!</b><br>${error.message}
+                    </td></tr>`;
+        }
+    }
+
+    // 2. Lấy dữ liệu Dropdown (Loại xe & Trạm)
+    async function fetchDropdownsData() {
+        try {
+            const catRes = await fetch(`${API_BASE_URL}/admin/categories-dropdown`);
+            const categories = await catRes.json();
+            const catSelect = document.getElementById("categorySelect");
+            categories.forEach(cat => {
+                const option = document.createElement("option");
+                option.value = cat.categoryId;
+                option.textContent = cat.name;
+                catSelect.appendChild(option);
+            });
+
+            const staRes = await fetch(`${API_BASE_URL}/admin/stations-dropdown`);
+            const stations = await staRes.json();
+            const staSelect = document.getElementById("stationSelect");
+            stations.forEach(sta => {
+                const option = document.createElement("option");
+                option.value = sta.stationId;
+                option.textContent = sta.name;
+                staSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Lỗi tải dropdown:", error);
+        }
+    }
+
+    // 3. Render bảng
+    function renderTable(bikes) {
+        const tbody = document.getElementById("bike-table-body");
+        tbody.innerHTML = "";
+
+        if(bikes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Không có xe nào.</td></tr>`;
+            return;
+        }
+
+        bikes.forEach(bike => {
+            const tr = document.createElement("tr");
+
+            let statusBadge = '';
+            if (bike.status === 'AVAILABLE') statusBadge = '<span class="badge badge-available">Sẵn sàng</span>';
+            else if (bike.status === 'IN_USE') statusBadge = '<span class="badge badge-inuse">Đang thuê</span>';
+            else statusBadge = '<span class="badge badge-maintenance">Bảo trì</span>';
+
+            let actionHtml = "";
+            if (bike.status !== 'MAINTENANCE') {
+                actionHtml += `<button class="btn btn-maintenance" onclick="setMaintenance(${bike.bikeId})">Bảo trì xe</button>`;
+            } else {
+                actionHtml += `<button class="btn btn-available" onclick="setAvailable(${bike.bikeId})">Gỡ bảo trì</button>`;
+            }
+
+            tr.innerHTML = `
+                    <td>${bike.bikeId}</td>
+                    <td style="font-weight: 600;">${bike.bikeCode}</td>
+                    <td>${bike.categoryName || 'N/A'}</td>
+                    <td>${bike.stationName || 'Chưa xếp'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionHtml}</td>
+                `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 4. Xử lý Modal Thêm Xe
+    function openAddModal() { document.getElementById("bikeModal").classList.add("active"); }
+    function closeModal() {
+        document.getElementById("bikeModal").classList.remove("active");
+        document.getElementById("bikeCode").value = "";
+        document.getElementById("categorySelect").value = "";
+        document.getElementById("stationSelect").value = "";
+    }
+
+    async function saveBike() {
+        const bikeCode = document.getElementById("bikeCode").value;
+        const categoryId = document.getElementById("categorySelect").value;
+        const stationId = document.getElementById("stationSelect").value || null;
+
+        if(!bikeCode || !categoryId) { alert("Vui lòng nhập Mã xe và chọn Loại xe!"); return; }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bikeCode: bikeCode,
+                    categoryId: parseInt(categoryId),
+                    stationId: stationId ? parseInt(stationId) : null
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || "Lỗi khi thêm xe");
+            }
+
+            alert("Thêm xe thành công!");
+            closeModal();
+            fetchBikes();
+        } catch (error) {
+            alert("Thêm xe thất bại: " + error.message);
+        }
+    }
+
+    // 5. Xử lý Bảo trì & Gỡ bảo trì
+    async function setMaintenance(id) {
+        if (!confirm("Chuyển xe này sang trạng thái BẢO TRÌ?")) return;
+        try {
+            await fetch(`${API_BASE_URL}/admin/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: "MAINTENANCE" })
+            });
+            fetchBikes();
+        } catch (error) { alert("Thao tác thất bại!"); }
+    }
+
+    async function setAvailable(id) {
+        if (!confirm("Gỡ bảo trì, đưa xe này về trạng thái SẴN SÀNG?")) return;
+        try {
+            await fetch(`${API_BASE_URL}/admin/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: "AVAILABLE" })
+            });
+            fetchBikes();
+        } catch (error) { alert("Thao tác thất bại!"); }
+    }
+
+    // Khởi tạo trang
+    window.onload = () => {
+        fetchBikes();
+        fetchDropdownsData();
+    };
+</script>
+</body>
+</html>

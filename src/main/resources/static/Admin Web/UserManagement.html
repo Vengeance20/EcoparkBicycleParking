@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOPARK - Quản Lý Tài Khoản</title>
+    <style>
+        /* ====== CSS CƠ BẢN & LAYOUT ====== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; background-color: #f3f4f6; color: #374151; }
+
+        /* Sidebar */
+        .sidebar { width: 250px; background-color: #1f2937; color: white; height: 100vh; padding-top: 20px; position: fixed; }
+        .sidebar h2 { text-align: center; color: #4ade80; margin-bottom: 30px; font-size: 24px; }
+        .sidebar a { display: block; color: #d1d5db; text-decoration: none; padding: 15px 25px; transition: 0.3s; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #374151; color: white; border-left-color: #4ade80; }
+
+        /* Main Content */
+        .main-content { margin-left: 250px; flex: 1; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; font-weight: bold; color: #111827; }
+        .header p { font-size: 14px; color: #6b7280; margin-top: 5px; }
+
+        /* ====== CSS CHO BẢNG ====== */
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background-color: #e5e7eb; }
+        th { padding: 12px 20px; text-align: left; font-size: 13px; font-weight: 600; text-transform: uppercase; color: #4b5563; }
+        td { padding: 15px 20px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        tr:hover td { background-color: #f9fafb; }
+
+        /* ====== CSS CHO BADGE & BUTTON ====== */
+        .badge { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-admin { background-color: #fee2e2; color: #dc2626; } /* Màu đỏ cho ADMIN */
+        .badge-manager { background-color: #e9d5ff; color: #7c3aed; } /* Màu tím cho MANAGER */
+        .badge-user { background-color: #e5e7eb; color: #4b5563; } /* Màu xám cho USER/CUSTOMER */
+
+        .status-locked { color: #ef4444; font-weight: 600; }
+        .status-active { color: #22c55e; }
+
+        .btn { padding: 6px 14px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; margin-right: 5px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-lock { background-color: #ef4444; }
+        .btn-unlock { background-color: #22c55e; }
+        .btn-role { background-color: #6366f1; }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>ECOPARK</h2>
+    <a href="#">Dashboard</a>
+    <a href="#" class="active">Quản lý User/Mgr</a>
+    <a href="#">Quản lý Trạm</a>
+    <a href="#">Quản lý Xe</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="header">
+        <div>
+            <h1>Quản Lý Tài khoản</h1>
+            <p>Manager (Admin tạo) & USER (Hệ thống tự ghi nhận)</p>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Thông tin tài khoản</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody id="user-table-body">
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 30px;">Đang tải dữ liệu...</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- JAVASCRIPT XỬ LÝ GỌI API --><!-- JAVASCRIPT XỬ LÝ GỌI API -->
+<script>
+    // Đảm bảo Spring Boot của bạn đang chạy ở port 8080
+    const API_BASE_URL = "http://localhost:8080/apiv1/auth";
+
+    // Hàm gọi API lấy danh sách User
+    async function fetchUsers() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/users`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi HTTP ${response.status}: ${errorText}`);
+            }
+            const users = await response.json();
+            renderTable(users);
+        } catch (error) {
+            console.error("Chi tiết lỗi:", error);
+            document.getElementById("user-table-body").innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align:center; color:red; padding: 30px; line-height: 1.6;">
+                        <b>Lỗi kết nối Server!</b><br>
+                        <span style="font-size: 12px; color: #555;">${error.message}</span>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Hàm render dữ liệu ra bảng HTML
+    function renderTable(users) {
+        const tbody = document.getElementById("user-table-body");
+        tbody.innerHTML = "";
+
+        if (users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Không có tài khoản nào.</td></tr>`;
+            return;
+        }
+
+        users.forEach(user => {
+            const tr = document.createElement("tr");
+
+            // 1. Xử lý hiển thị Vai trò (Role)
+            let roleBadge = '';
+            if (user.role === 'ADMIN') {
+                roleBadge = '<span class="badge badge-admin">ADMIN</span>';
+            } else if (user.role === 'MANAGER') {
+                roleBadge = '<span class="badge badge-manager">MANAGER</span>';
+            } else {
+                roleBadge = '<span class="badge badge-user">USER</span>';
+            }
+
+            // 2. Xử lý hiển thị Trạng thái (isLocked)
+            let statusHtml = user.isLocked
+                ? '<span class="status-locked">Bị khóa</span>'
+                : '<span class="status-active">Hoạt động</span>';
+
+            // 3. Xử lý nút Hành động
+            let actionHtml = "";
+            if (user.role !== 'ADMIN') {
+
+                // Nút Thay đổi quyền (Cấp Manager hoặc Hạ quyền User)
+                if (user.role === 'CUSTOMER' || user.role === 'USER') {
+                    actionHtml += `<button class="btn btn-role" onclick="changeRole(${user.userId}, 'MANAGER')">Cấp Manager</button>`;
+                } else if (user.role === 'MANAGER') {
+                    actionHtml += `<button class="btn btn-role" style="background-color: #dc2626;" onclick="changeRole(${user.userId}, 'CUSTOMER')">Hạ quyền User</button>`;
+                }
+
+                // Nút Khóa / Mở khóa
+                if (user.isLocked) {
+                    actionHtml += `<button class="btn btn-unlock" onclick="unlockUser(${user.userId})">Mở khóa</button>`;
+                } else {
+                    actionHtml += `<button class="btn btn-lock" onclick="lockUser(${user.userId})">Khóa</button>`;
+                }
+            } else {
+                actionHtml = `<span style="font-size:12px; color:#999;">Không thể chỉnh sửa</span>`;
+            }
+
+            // Ghép nội dung vào dòng
+            tr.innerHTML = `
+                <td>
+                    <div style="font-weight: 600;">${user.fullName || user.username}</div>
+                    <div style="font-size: 12px; color: #6b7280;">${user.email}</div>
+                </td>
+                <td>${roleBadge}</td>
+                <td>${statusHtml}</td>
+                <td>${actionHtml}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Hàm gọi API Khóa tài khoản
+    async function lockUser(userId) {
+        if (!confirm("Bạn có chắc muốn KHÓA tài khoản này không?")) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${userId}/lock`, { method: 'PUT' });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || "Lỗi server");
+            }
+            alert("Khóa tài khoản thành công!");
+            fetchUsers();
+        } catch (error) {
+            alert("Khóa tài khoản thất bại! Lỗi: " + error.message);
+            console.error(error);
+        }
+    }
+
+    // Hàm gọi API Mở khóa tài khoản
+    async function unlockUser(userId) {
+        if (!confirm("Bạn có chắc muốn MỞ KHÓA tài khoản này không?")) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${userId}/unlock`, { method: 'PUT' });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || "Lỗi server");
+            }
+            alert("Mở khóa tài khoản thành công!");
+            fetchUsers();
+        } catch (error) {
+            alert("Mở khóa tài khoản thất bại! Lỗi: " + error.message);
+            console.error(error);
+        }
+    }
+
+    // Hàm gọi API Thay đổi quyền (Gộp chung Cấp Manager và Hạ quyền)
+    async function changeRole(userId, newRole) {
+        const message = newRole === 'MANAGER' ? "Cấp quyền MANAGER cho tài khoản này?" : "Hạ quyền tài khoản này xuống USER?";
+        if (!confirm(message)) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${userId}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole }) // Gửi role mới lên backend
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || "Lỗi server");
+            }
+            alert("Cập nhật quyền thành công!");
+            fetchUsers();
+        } catch (error) {
+            alert("Cập nhật quyền thất bại! Lỗi: " + error.message);
+            console.error(error);
+        }
+    }
+
+    // Gọi hàm tải dữ liệu lần đầu khi mở trang
+    window.onload = fetchUsers;
+</script>
+</body>
+</html>

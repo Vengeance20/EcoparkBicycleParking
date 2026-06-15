@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Bike Rental - Login & Register</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at 10% 10%, #f0fdf4 0%, #ffffff 50%); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div class="flex flex-col items-center text-center space-y-6">
+            <div class="w-16 h-16 bg-[#10b981] rounded-full flex items-center justify-center text-white text-3xl shadow-lg">
+                <i class="fas fa-bicycle"></i>
+            </div>
+            <div class="space-y-2">
+                <h1 class="text-4xl font-bold text-slate-800">Ecopark Bike Rental</h1>
+                <p class="text-gray-500">Hệ thống quản lý xe đạp thông minh</p>
+            </div>
+            <img src="https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?auto=format&fit=crop&q=80&w=1000" 
+                 class="rounded-2xl shadow-xl border-4 border-white object-cover h-64 w-full max-w-md">
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-50 max-w-md w-full mx-auto">
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-8">
+                <button id="tabLogin" onclick="showForm('login')" class="flex-1 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-slate-800">Đăng nhập</button>
+                <button id="tabRegister" onclick="showForm('register')" class="flex-1 py-2 text-sm font-medium text-gray-500">Đăng ký</button>
+            </div>
+
+            <div id="formLogin" class="space-y-6">
+                <h2 class="text-2xl font-bold text-slate-800">Đăng nhập</h2>
+                <div class="space-y-4">
+                    <input type="email" id="loginEmail" placeholder="Email" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="password" id="loginPass" placeholder="Mật khẩu" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <button onclick="handleLogin()" class="w-full bg-[#10b981] hover:bg-[#0da472] text-white font-bold py-3 rounded-xl shadow-lg transition-all">Đăng nhập</button>
+                </div>
+            </div>
+
+            <div id="formRegister" class="space-y-6 hidden">
+                <h2 class="text-2xl font-bold text-slate-800">Tạo tài khoản</h2>
+                <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                    <input type="text" id="regUsername" placeholder="Tên đăng nhập" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="password" id="regPass" placeholder="Mật khẩu" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="text" id="regFullName" placeholder="Họ và tên" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="email" id="regEmail" placeholder="Email" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="tel" id="regPhone" placeholder="Số điện thoại" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="text" id="regNationalId" placeholder="CCCD" class="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                    <button onclick="handleRegister()" class="w-full bg-[#10b981] hover:bg-[#0da472] text-white font-bold py-3 rounded-xl shadow-lg transition-all">Đăng ký</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const API_BASE = "http://localhost:8080/apiv1/auth";
+
+    function showForm(type) {
+        document.getElementById('formLogin').classList.toggle('hidden', type !== 'login');
+        document.getElementById('formRegister').classList.toggle('hidden', type !== 'register');
+        document.getElementById('tabLogin').className = type === 'login' ? 'flex-1 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-slate-800' : 'flex-1 py-2 text-sm font-medium text-gray-500';
+        document.getElementById('tabRegister').className = type === 'register' ? 'flex-1 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-slate-800' : 'flex-1 py-2 text-sm font-medium text-gray-500';
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPass').value; // Nhập mật khẩu thật (VD: 123456)
+
+        if (!email || !password) return alert("Nhập đủ thông tin!");
+
+        try {
+            const response = await fetch(`${API_BASE}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }) // Gửi mật khẩu thật lên
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // 🔴 BỎ TOKEN, CHỈ LƯU THÔNG TIN USER ĐỂ BIẾT ROLE MÀ CHUYỂN TRANG
+                localStorage.removeItem('accessToken'); // Xóa token cũ nếu có
+                localStorage.setItem('userData', JSON.stringify(data.user));
+
+                // Lấy role từ thông tin user Backend trả về
+                const userRole = data.user?.role;
+
+                // Phân quyền chuyển trang dựa trên Role trong DB
+                if (userRole === 'ADMIN') {
+                    window.location.href = 'Admin Web/AdminPage.html';
+                } else if (userRole === 'MANAGER') {
+                    window.location.href = 'Manager Web/DashboardManager.html';
+                } else {
+                    // CUSTOMER hoặc các role khác
+                    window.location.href = 'User Web/UserPage.html';
+                }
+
+            } else {
+                // Báo lỗi rõ ràng (Sai mật khẩu, hoặc Tài khoản bị khóa)
+                alert("❌ Lỗi: " + (data.message || "Tài khoản không tồn tại hoặc sai mật khẩu"));
+            }
+        } catch (e) {
+            alert("Lỗi kết nối mạng! Không thể gọi API. Kiểm tra Backend đã chạy chưa?");
+        }
+    }
+
+    // ==========================================
+    // HÀM ĐĂNG KÝ ĐÃ ĐƯỢC SỬA LỖI & THÊM VALIDATE
+    // ==========================================
+    async function handleRegister() {
+        const payload = {
+            username: document.getElementById('regUsername').value.trim(),
+            password: document.getElementById('regPass').value,
+            fullName: document.getElementById('regFullName').value.trim(),
+            email: document.getElementById('regEmail').value.trim(),
+            phoneNumber: document.getElementById('regPhone').value.trim(),
+            nationalId: document.getElementById('regNationalId').value.trim()
+        };
+
+        if (!payload.username || !payload.password || !payload.fullName || !payload.email) {
+            return alert("Vui lòng điền đầy đủ các trường bắt buộc!");
+        }
+        if (payload.password.length < 6) {
+            return alert("Mật khẩu phải có ít nhất 6 ký tự!");
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Đăng ký thành công! Mời bạn đăng nhập.");
+                showForm('login');
+            } else {
+                // 🔴 ĐỌC CHÍNH XÁC LỖI TỪ BACKEND VÀ HIỆN RA MÀN HÌNH
+                const errorText = await response.text(); 
+                alert("Lỗi từ Backend:\n" + errorText); 
+            }
+        } catch (e) { 
+            alert("Lỗi mạng! Không thể gọi API. Kiểm tra Backend đã chạy chưa?"); 
+        }
+    }
+
+</script>
+</body>
+</html>

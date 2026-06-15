@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bicycle Rental</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
+        .card { transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        /* Toast CSS */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            padding: 16px 32px; border-radius: 50px; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: all 0.5s ease; opacity: 0; z-index: 1000;
+        }
+        #toast.show { bottom: 40px; opacity: 1; }
+        .toast-success { background: #1e293b; color: white; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+<div class="max-w-5xl mx-auto">
+    <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+        <h1 class="text-2xl font-black text-indigo-700 cursor-pointer" onclick="window.location.href='UserPage.html'">ECOPARK <span class="text-slate-800">BIKES</span></h1>
+        <div class="flex gap-2 items-center">
+
+            <div class="bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-xl flex items-center gap-2 mr-2 cursor-pointer hover:bg-indigo-100 transition-all" onclick="window.location.href='BuyVirtualPoints.html'" title="Nạp thêm điểm">
+                <i class="fas fa-wallet text-indigo-500"></i>
+                <span id="headerBalance" class="font-black text-indigo-700">0 P</span>
+            </div>
+
+            <span id="residentTag" class="hidden bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 mr-2"><i class="fas fa-home mr-1"></i>Cư dân (-40%)</span>
+
+            <button onclick="switchTab('bikes')" id="btn-bikes" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm">THUÊ XE</button>
+            <button onclick="switchTab('history')" id="btn-history" class="bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm">LỊCH SỬ</button>
+            <a href="ChangeInformation.html" class="bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm hover:bg-slate-200"><i class="fas fa-user"></i></a>
+        </div>
+    </header>
+
+    <div id="tab-bikes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <div id="tab-history" class="hidden">
+        <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+            <h2 class="text-xl font-black text-slate-800 mb-6">LỊCH SỬ CHUYẾN ĐI</h2>
+            <div id="history-container" class="space-y-4"></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast">
+    <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center"><i id="faIcon" class="fas"></i></div>
+    <div>
+        <p id="toastTitle" class="font-bold"></p>
+        <p id="toastDesc" class="text-xs opacity-80"></p>
+    </div>
+</div>
+
+<script>
+    const API = "http://localhost:8080/apiv1";
+
+    let currentActiveRental = null;
+    let isResident = false;
+    let discountRate = 0;
+
+    // HÀM TỰ ĐỘNG ĐÍNH KÈM CHÌA KHÓA AUTHENTICATION TRÁNH LỖI 403
+    function getAuthHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+        };
+    }
+
+    // ==========================================
+    // HELPER: LẤY USER ID & CHECK CƯ DÂN
+    // ==========================================
+    function getCurrentUserId() {
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        if (!userData.userId) {
+            showToast('error', 'Lỗi xác thực', 'Bạn chưa đăng nhập! Đang chuyển hướng...');
+            setTimeout(() => { window.location.href = '../RegisterLoginPage.html'; }, 1500);
+            return null;
+        }
+
+        isResident = userData.isResident === true;
+        discountRate = isResident ? 0.4 : 0;
+
+        if(isResident) {
+            document.getElementById('residentTag').classList.remove('hidden');
+        } else {
+            document.getElementById('residentTag').classList.add('hidden');
+        }
+
+        return userData.userId;
+    }
+
+    // ==========================================
+    // ĐỒNG BỘ ĐIỂM ẢO THEO THỜI GIAN THỰC (ĐÃ SỬA CHẮC CHẮN)
+    // ==========================================
+    async function syncWalletBalance() {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        const balanceUI = document.getElementById('headerBalance');
+
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        const cachedBalance = userData.walletBalance ?? 0;
+        balanceUI.innerText = parseInt(cachedBalance).toLocaleString('vi-VN') + ' P';
+
+        try {
+            const res = await fetch(`${API}/auth/profile/${userId}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (res.ok) {
+                const freshUser = await res.json();
+
+                // Giải pháp phòng thủ đa tầng: Quét mọi trường dữ liệu có khả năng chứa số dư
+                const latestBalance = freshUser.walletBalance ?? freshUser.currentBalance ?? freshUser.balance ?? freshUser.data ?? 0;
+
+                balanceUI.innerText = parseInt(latestBalance).toLocaleString('vi-VN') + ' P';
+
+                userData.walletBalance = latestBalance;
+                localStorage.setItem('userData', JSON.stringify(userData));
+            }
+        } catch (error) {
+            console.log("Đang sử dụng số dư ngoại tuyến.");
+        }
+    }
+
+    // ==========================================
+    // TOAST HELPER
+    // ==========================================
+    function showToast(type, title, desc) {
+        const toast = document.getElementById('toast');
+        toast.className = `show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+        document.getElementById('toastIcon').className = `w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-green-500' : 'bg-red-500 text-white'}`;
+        document.getElementById('faIcon').className = `fas ${type === 'success' ? 'fa-check' : 'fa-exclamation-triangle'}`;
+        document.getElementById('toastTitle').innerText = title;
+        document.getElementById('toastDesc').innerText = desc;
+        setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
+
+    // ==========================================
+    // TAB SWITCH
+    // ==========================================
+    function switchTab(tab) {
+        document.getElementById('tab-bikes').classList.toggle('hidden', tab !== 'bikes');
+        document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
+
+        document.getElementById('btn-bikes').className = tab === 'bikes'
+            ? 'bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm'
+            : 'bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm';
+
+        document.getElementById('btn-history').className = tab === 'history'
+            ? 'bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm'
+            : 'bg-slate-100 text-slate-500 px-6 py-2 rounded-xl font-bold text-sm';
+
+        if(tab === 'bikes') loadVehicles();
+        if(tab === 'history') loadHistory();
+    }
+
+    // ==========================================
+    // KIỂM TRA XE ĐANG THUÊ
+    // ==========================================
+    async function checkMyActiveRental() {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        try {
+            const res = await fetch(`${API}/rentals/my-active-rental?userId=${userId}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            if (res.ok) {
+                const data = await res.json();
+                currentActiveRental = (data && data.rentalId) ? data : null;
+            } else {
+                currentActiveRental = null;
+            }
+        } catch (e) {
+            currentActiveRental = null;
+        }
+    }
+
+    // ==========================================
+    // 1. LOAD VẬN TẢI & HIỂN THỊ GIÁ TỪNG XE TỪ CATEGORY
+    // ==========================================
+    async function loadVehicles() {
+        const container = document.getElementById('tab-bikes');
+        try {
+            const res = await fetch(`${API}/vehicles/public`);
+            const bikes = await res.json();
+
+            container.innerHTML = bikes.map(b => {
+                const status = b.status;
+                let buttons = '';
+
+                const isMyBike = currentActiveRental && currentActiveRental.bikeCode === b.bikeCode;
+                const isRentingAnotherBike = currentActiveRental && !isMyBike;
+
+                const originalPrice = b.baseFee || 0;
+                const originalExtraFee = b.extraFee || 0;
+                const categoryName = b.categoryName || 'Standard';
+
+                let priceHtml = '';
+
+                if(originalPrice > 0) {
+                    let finalPrice = originalPrice * (1 - discountRate);
+                    let finalExtraFee = originalExtraFee * (1 - discountRate);
+                    let discountBadge = '';
+
+                    if(isResident) {
+                        discountBadge = `<div class="text-right mt-1"><span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">Ưu đãi Cư dân -40%</span></div>`;
+                    }
+
+                    priceHtml = `
+                    <div class="bg-slate-50 p-3 rounded-xl mb-4 text-xs border border-slate-100 space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500"><i class="fas fa-coins mr-1"></i>Cước cơ bản:</span>
+                            <div class="text-right">
+                                ${isResident ? `<span class="text-[10px] text-slate-400 line-through mr-1">${originalPrice.toLocaleString('vi-VN')}đ</span>` : ''}
+                                <span class="font-bold text-slate-800">${finalPrice.toLocaleString('vi-VN')}đ</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500"><i class="fas fa-exclamation-circle mr-1 text-red-400"></i>Phí phạt:</span>
+                            <div class="text-right">
+                                ${isResident && originalExtraFee > 0 ? `<span class="text-[10px] text-slate-400 line-through mr-1">${originalExtraFee.toLocaleString('vi-VN')}đ</span>` : ''}
+                                <span class="font-bold text-red-500">${originalExtraFee > 0 ? finalExtraFee.toLocaleString('vi-VN') + 'đ' : 'Miễn phí'}</span>
+                            </div>
+                        </div>
+                        ${discountBadge}
+                    </div>
+                    `;
+                } else {
+                    priceHtml = `<div class="bg-slate-50 p-2 rounded-xl mb-4 text-xs text-center text-slate-400 border border-slate-100">Chưa cập nhật giá</div>`;
+                }
+
+                // LOGIC NÚT BẤM
+                if (isMyBike) {
+                    if (currentActiveRental.status === 'RESERVED') {
+                        buttons = `<button onclick="handleAction('unlock', '${b.bikeCode}')" class="w-full bg-amber-500 text-white py-3 rounded-xl font-bold text-xs hover:bg-amber-600 transition-all">MỞ KHÓA XE BẮT ĐẦU ĐI</button>`;
+                    } else if (currentActiveRental.status === 'ACTIVE') {
+                        buttons = `<button onclick="handleReturn()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold text-xs hover:bg-red-600 transition-all">TRẢ XE (RETURN)</button>`;
+                    }
+                } else if (status === 'MAINTENANCE') {
+                    buttons = `<button disabled class="w-full bg-slate-200 text-slate-400 py-3 rounded-xl font-bold text-xs cursor-not-allowed">ĐANG BẢO TRÌ</button>`;
+                } else if (status === 'AVAILABLE') {
+                    if (isRentingAnotherBike) {
+                        buttons = `<button disabled class="w-full bg-slate-200 text-slate-400 py-3 rounded-xl font-bold text-xs cursor-not-allowed">BẠN ĐANG ĐẶT/THUÊ XE KHÁC</button>`;
+                    } else {
+                        buttons = `
+                            <button onclick="handleAction('rent', '${b.bikeCode}')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs mb-2 hover:bg-black transition-all">THUÊ NGAY</button>
+                            <button onclick="handleAction('reserve', '${b.bikeCode}')" class="w-full bg-indigo-50 text-indigo-600 py-3 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all">ĐẶT TRƯỚC (15P)</button>
+                        `;
+                    }
+                } else if (status === 'RESERVED') {
+                    buttons = `<button disabled class="w-full bg-slate-200 text-slate-400 py-3 rounded-xl font-bold text-xs cursor-not-allowed">XE ĐÃ ĐƯỢC ĐẶT TRƯỚC</button>`;
+                } else if (status === 'IN_USE') {
+                    buttons = `<button disabled class="w-full bg-slate-200 text-slate-400 py-3 rounded-xl font-bold text-xs cursor-not-allowed">XE ĐANG ĐƯỢC THUÊ</button>`;
+                }
+
+                return `
+                <div class="card bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm ${status === 'MAINTENANCE' ? 'opacity-50' : ''}">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-slate-400">#${b.bikeCode}</span>
+                        <span class="px-2 py-1 rounded-md text-[9px] font-black ${getStatusClass(status)}">${status}</span>
+                    </div>
+                    <h3 class="text-xl font-black text-slate-800 mb-1">${b.bikeCode}</h3>
+                    <p class="text-xs text-indigo-500 font-bold mb-3 uppercase"><i class="fas fa-tag mr-1"></i>${categoryName}</p>
+
+                    ${priceHtml}
+
+                    <div class="space-y-2">${buttons}</div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = "<p class='text-red-500 font-bold'>Lỗi kết nối server!</p>";
+        }
+    }
+
+    // ==========================================
+    // 2. RENT / RESERVE / UNLOCK (ĐÃ THÊM TOKEN)
+    // ==========================================
+    async function handleAction(endpoint, bikeCode) {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        try {
+            const res = await fetch(`${API}/rentals/${endpoint}`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ userId: userId, bikeCode: bikeCode })
+            });
+
+            if(res.ok) {
+                if(endpoint === 'unlock') {
+                    const msg = await res.text();
+                    if (currentActiveRental) currentActiveRental.status = "ACTIVE";
+                    showToast('success', 'Thành công', msg);
+                } else {
+                    const data = await res.json();
+                    if(data.rentalId) currentActiveRental = data;
+                    showToast('success', 'Thành công', data.message || `Mã chuyến đi: ${data.rentalId}`);
+                }
+                await syncWalletBalance(); // Cập nhật lại ví điểm ngay lập tức
+                loadVehicles();
+            } else {
+                const errMsg = await res.text();
+                showToast('error', 'Thao tác thất bại', errMsg);
+            }
+        } catch (e) {
+            showToast('error', 'Lỗi hệ thống', 'Không thể kết nối đến server!');
+        }
+    }
+
+    // ==========================================
+    // 3. RETURN BIKE (ĐÃ FIX PATH & THÊM TOKEN)
+    // ==========================================
+    async function handleReturn() {
+        if (!currentActiveRental) {
+            return showToast('error', 'Lỗi', 'Không tìm thấy chuyến đi nào đang hoạt động!');
+        }
+
+        const rId = currentActiveRental.rentalId;
+        const stationInput = prompt("Nhập ID trạm trả xe (Ví dụ: 1, 2, 3...):", "1");
+        if(stationInput === null) return;
+        const endStationId = parseInt(stationInput);
+        if(isNaN(endStationId)) return showToast('error', 'Lỗi nhập', 'ID trạm phải là số!');
+
+        try {
+            const res = await fetch(`${API}/rentals/return`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ rentalId: rId, endStationId: endStationId })
+            });
+
+            if(res.ok) {
+                const data = await res.json();
+                currentActiveRental = null;
+
+                const desc = `Thời gian: ${data.durationMinutes} phút | Phí: ${data.totalFee}đ | Hoàn tiền: ${data.refundAmount}đ`;
+                showToast('success', 'Trả xe thành công', desc);
+
+                await syncWalletBalance(); // Đồng bộ chốt sổ điểm ảo từ DB ngay sau khi hoàn cọc
+                loadVehicles();
+            } else {
+                const errMsg = await res.text();
+                showToast('error', 'Trả xe thất bại', errMsg);
+            }
+        } catch (e) {
+            showToast('error', 'Lỗi hệ thống', 'Lỗi kết nối khi trả xe!');
+        }
+    }
+
+    // ==========================================
+    // 4. LỊCH SỬ (HISTORY)
+    // ==========================================
+    async function loadHistory() {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        const container = document.getElementById('history-container');
+        container.innerHTML = "<p class='text-slate-400 text-center py-4'>Đang tải dữ liệu...</p>";
+        try {
+            const res = await fetch(`${API}/rentals/history/${userId}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            const data = await res.json();
+
+            if(data.length === 0) {
+                container.innerHTML = "<p class='text-slate-400 text-center py-4'>Bạn chưa có chuyến đi nào.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(h => {
+                const start = h.startTime ? new Date(h.startTime).toLocaleString('vi-VN') : '---';
+                const end = h.endTime ? new Date(h.endTime).toLocaleString('vi-VN') : 'Đang thuê...';
+
+                let penaltyHtml = '';
+                if(h.penaltyFee && h.penaltyFee > 0) {
+                    penaltyHtml = `<p class="text-[9px] text-red-500 font-bold">(Phạt: ${h.penaltyFee}đ)</p>`;
+                }
+
+                return `
+                <div class="flex justify-between items-center p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-all">
+                    <div>
+                        <p class="font-black text-slate-800 text-sm uppercase">${h.bikeCode}</p>
+                        <p class="text-[10px] text-slate-500 font-bold">${h.startStationName || 'Xuất phát'} → ${h.endStationName || '---'}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Bắt đầu: ${start}</p>
+                        <p class="text-[9px] text-slate-400">Kết thúc: ${end}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-indigo-600 text-lg">${h.totalFee || 0}đ</p>
+                        ${penaltyHtml}
+                        <span class="text-[8px] font-black uppercase px-2 py-1 rounded-md ${getStatusClass(h.status)}">${h.status}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = "<p class='text-red-500 font-bold text-center py-4'>Lỗi khi tải lịch sử!</p>";
+        }
+    }
+
+    function getStatusClass(s) {
+        if(s === 'AVAILABLE' || s === 'COMPLETED') return 'bg-emerald-100 text-emerald-600';
+        if(s === 'IN_USE' || s === 'ACTIVE') return 'bg-blue-100 text-blue-600';
+        if(s === 'MAINTENANCE') return 'bg-red-100 text-red-600';
+        if(s === 'RESERVED') return 'bg-amber-100 text-amber-600';
+        return 'bg-slate-100 text-slate-400';
+    }
+
+    // KHỞI CHẠY TRANG
+    window.onload = async () => {
+        getCurrentUserId();
+        await syncWalletBalance(); // Chạy đồng bộ ví đầu tiên
+        await checkMyActiveRental();
+        loadVehicles();
+    };
+</script>
+</body>
+</html>

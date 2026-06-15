@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecopark Wallet - Giao dịch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #active-bg {
+            position: absolute; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 0; pointer-events: none;
+        }
+        .pkg-card { position: relative; z-index: 10; cursor: pointer; }
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            padding: 16px 32px; border-radius: 50px; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: all 0.5s ease; z-index: 1000;
+        }
+        #toast.show { bottom: 40px; opacity: 1; }
+        .toast-success { background: #1e293b; color: white; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .tab-btn.active { color: #16a34a; border-bottom: 3px solid #16a34a; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-10">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center gap-2 text-green-600 font-bold text-xl cursor-pointer" onclick="window.location.href='UserPage.html'">
+        <i class="fas fa-arrow-left text-gray-400 mr-2 hover:text-gray-600"></i>
+        <i class="fas fa-wallet"></i><span>Ecopark Wallet</span>
+    </div>
+    <div class="text-right">
+        <p class="text-[10px] text-gray-400 font-bold uppercase">Số dư khả dụng</p>
+        <p id="userBalance" class="text-green-600 font-bold text-lg">0 P</p>
+    </div>
+</nav>
+
+<main class="max-w-4xl mx-auto p-6">
+    <div class="flex gap-8 mb-8 border-b border-gray-200">
+        <button onclick="switchTab('deposit')" id="tab-deposit" class="tab-btn active pb-4 font-bold transition-all">Nạp điểm</button>
+        <button onclick="switchTab('withdraw')" id="tab-withdraw" class="tab-btn pb-4 font-bold text-gray-400 transition-all">Rút tiền</button>
+    </div>
+
+    <div id="section-deposit">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-slate-800">Chọn gói nạp điểm</h2>
+        </div>
+        <div class="relative grid grid-cols-2 md:grid-cols-3 gap-4 mb-10 p-2" id="packageGrid">
+            <div id="active-bg"></div>
+            <div onclick="selectPkg(this, 10, 10000)" class="pkg-card p-5 rounded-2xl text-center">
+                <p class="font-bold">10 P</p><p class="text-[10px] text-gray-400">Giá: 10k</p>
+            </div>
+            <div onclick="selectPkg(this, 50, 50000)" class="pkg-card p-5 rounded-2xl text-center">
+                <p class="font-bold">50 P</p><p class="text-[10px] text-gray-400">Giá: 50k</p>
+            </div>
+            <div onclick="selectPkg(this, 105, 105000)" class="pkg-card p-5 rounded-2xl text-center">
+                <p class="font-bold">105 P</p><p class="text-[9px] text-blue-600 font-bold">Thêm 5 điểm bonus!</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-[40px] p-8 shadow-xl border border-gray-100 text-center">
+            <p id="confirmPrice" class="text-3xl font-black text-slate-800 mb-4">10.000 VNĐ</p>
+            <img id="qrPreview" src="" class="w-32 h-32 mx-auto mb-4 bg-gray-50 p-2">
+            <button onclick="handleAction('deposit')" id="btnDeposit" class="w-full bg-green-500 text-white font-bold py-5 rounded-2xl shadow-lg hover:bg-green-600">XÁC NHẬN NẠP TIỀN</button>
+        </div>
+    </div>
+
+    <div id="section-withdraw" class="hidden">
+        <div class="bg-white rounded-[40px] p-8 shadow-xl border border-gray-100 space-y-6">
+            <input type="number" id="withdrawAmount" placeholder="Nhập số điểm muốn rút" class="w-full bg-gray-50 border rounded-2xl p-4 font-bold text-xl outline-none focus:border-green-500">
+            <button onclick="handleAction('withdraw')" id="btnWithdraw" class="w-full bg-slate-800 text-white font-bold py-5 rounded-2xl shadow-lg">YÊU CẦU RÚT TIỀN</button>
+        </div>
+    </div>
+</main>
+
+<div id="toast"><div id="toastIcon"></div><div><p id="toastTitle" class="font-bold"></p><p id="toastDesc" class="text-xs"></p></div></div>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080";
+    let selectedPriceVnd = 10000;
+    let selectedPoints = 10;
+    let isProcessing = false;
+
+    // 🔴 HÀM TỰ ĐỘNG ĐÍNH KÈM TOKEN BẢO MẬT
+    function getAuthHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+        };
+    }
+
+    function getCurrentUserId() {
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        if (!userData.userId) {
+            showToast('error', 'Lỗi xác thực', 'Bạn chưa đăng nhập! Đang chuyển hướng...');
+            setTimeout(() => { window.location.href = '../RegisterLoginPage.html'; }, 1500);
+            return null;
+        }
+        return userData.userId;
+    }
+
+    // 🔴 ĐỒNG BỘ SỐ DƯ THEO THỜI GIAN THỰC TỪ DATABASE
+    async function syncWalletBalance() {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        // Bước 1: Hiển thị nhanh số dư từ cache để UI không bị giật
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        updateBalanceUI(userData.walletBalance || 0);
+
+        try {
+            // Bước 2: Gọi API ngầm lấy số tiền chính xác 100%
+            const res = await fetch(`${API_BASE_URL}/apiv1/auth/profile/${userId}`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (res.ok) {
+                const freshUser = await res.json();
+                updateBalanceUI(freshUser.walletBalance);
+            }
+        } catch (error) {
+            console.log("Đang dùng số dư offline do lỗi kết nối.");
+        }
+    }
+
+    function updateBalanceUI(value) {
+        let finalValue = 0;
+        if (typeof value === 'object') {
+            finalValue = value.currentBalance ?? value.walletBalance ?? value.newBalance ?? 0;
+        } else {
+            finalValue = value || 0;
+        }
+        document.getElementById('userBalance').innerText = parseInt(finalValue).toLocaleString('vi-VN') + ' P';
+
+        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        userData.walletBalance = finalValue;
+        localStorage.setItem('userData', JSON.stringify(userData));
+    }
+
+    async function handleAction(type) {
+        if(isProcessing) return;
+
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        isProcessing = true;
+        const btn = document.getElementById(type === 'deposit' ? 'btnDeposit' : 'btnWithdraw');
+        const originalText = btn.innerText;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
+        btn.disabled = true;
+
+        try {
+            let url = '';
+            let body = {};
+
+            if (type === 'deposit') {
+                url = `${API_BASE_URL}/apiv1/payment/topup`;
+                body = { userId: userId, amountVnd: selectedPriceVnd };
+            } else if (type === 'withdraw') {
+                const amountToWithdraw = parseInt(document.getElementById('withdrawAmount').value) || 0;
+
+                if (amountToWithdraw < 67) {
+                    throw new Error("Số điểm rút tối thiểu là 67P");
+                }
+
+                url = `${API_BASE_URL}/apiv1/payment/withdraw`;
+                body = { userId: userId, pointsToWithdraw: amountToWithdraw };
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: getAuthHeaders(), // 🔴 ĐÃ THÊM TOKEN VÀO ĐÂY
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Cập nhật giao diện chớp nhoáng
+                updateBalanceUI(data);
+                showToast('success', 'Thành công', data.message || 'Giao dịch thành công!');
+                if(type === 'withdraw') document.getElementById('withdrawAmount').value = '';
+
+                // Gọi lại hàm đồng bộ để chốt sổ với Database
+                syncWalletBalance();
+            } else {
+                showToast('error', 'Lỗi', data.message || 'Giao dịch thất bại');
+            }
+        } catch (error) {
+            showToast('error', 'Lỗi', error.message || 'Không thể gọi API. Kiểm tra Backend!');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            isProcessing = false;
+        }
+    }
+
+    // --- Các hàm UI ---
+    function switchTab(tab) {
+        document.getElementById('section-deposit').classList.toggle('hidden', tab !== 'deposit');
+        document.getElementById('section-withdraw').classList.toggle('hidden', tab !== 'withdraw');
+        document.getElementById('tab-deposit').className = `tab-btn pb-4 font-bold transition-all ${tab==='deposit'?'active text-green-600':'text-gray-400'}`;
+        document.getElementById('tab-withdraw').className = `tab-btn pb-4 font-bold transition-all ${tab==='withdraw'?'active text-green-600':'text-gray-400'}`;
+    }
+
+    function selectPkg(el, points, price) {
+        const bg = document.getElementById('active-bg');
+        bg.style.width = el.offsetWidth + 'px'; bg.style.height = el.offsetHeight + 'px';
+        bg.style.left = el.offsetLeft + 'px'; bg.style.top = el.offsetTop + 'px';
+
+        selectedPriceVnd = price;
+        selectedPoints = points;
+
+        document.getElementById('confirmPrice').innerText = price.toLocaleString() + ' VNĐ';
+
+        const qrImg = document.getElementById('qrPreview');
+        qrImg.style.opacity = '0.5';
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VCB-NAP-${price}`;
+        qrImg.onload = () => qrImg.style.opacity = '1';
+    }
+
+    function showToast(type, title, desc) {
+        const toast = document.getElementById('toast');
+        toast.className = `show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+        document.getElementById('toastIcon').innerHTML = type === 'success' ? '<i class="fas fa-check text-green-500 bg-white p-2 rounded-full"></i>' : '<i class="fas fa-exclamation-triangle text-red-500 bg-white p-2 rounded-full"></i>';
+        document.getElementById('toastTitle').innerText = title;
+        document.getElementById('toastDesc').innerText = desc;
+        setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
+
+    window.onload = () => {
+        syncWalletBalance(); // 🔴 GỌI HÀM LẤY SỐ DƯ TỪ DATABASE NGAY KHI MỞ TRANG
+        selectPkg(document.querySelector('.pkg-card'), 10, 10000);
+    };
+</script>
+</body>
+</html>
