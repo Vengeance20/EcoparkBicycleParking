@@ -131,6 +131,8 @@ public class BikeService {
         if (bike.getCategory() != null) {
             res.setCategoryId(bike.getCategory().getCategoryId());
             res.setCategoryName(bike.getCategory().getName()); // Map thêm tên loại xe
+            res.setBaseFee(bike.getCategory().getBaseFee());
+            res.setExtraFee(bike.getCategory().getExtraFee());
         }
 
         if (bike.getStation() != null) {
@@ -138,5 +140,15 @@ public class BikeService {
             res.setStationName(bike.getStation().getName()); // Map thêm tên trạm
         }
         return res;
+    }
+
+    // Lấy danh mục xe cho Dropdown
+    public List<BikeCategory> getAllCategories() {
+        return categoryRepository.findAllCategories();
+    }
+
+    // Lấy danh sách trạm cho Dropdown
+    public List<Station> getAllStations() {
+        return stationRepository.findAll();
     }
 }

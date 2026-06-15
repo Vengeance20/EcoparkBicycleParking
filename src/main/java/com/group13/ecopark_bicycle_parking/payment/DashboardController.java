@@ -1,4 +1,4 @@
-package com.group13.ecopark_bicycle_parking.dashboard;
+package com.group13.ecopark_bicycle_parking.payment;
 
 import com.group13.ecopark_bicycle_parking.bicycle.BikeRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -66,15 +66,13 @@ public class BikeController {
     // 🔴 THÊM API: Lấy danh sách Loại xe cho Dropdown
     @GetMapping("/admin/categories-dropdown")
     public ResponseEntity<?> getCategoriesDropdown() {
-        return ResponseEntity.ok(categoryRepository.findAllCategories());
+        return ResponseEntity.ok(bikeService.getAllCategories()); // Gọi qua Service
     }
 
-    // 🔴 THÊM API: Lấy danh sách Trạm cho Dropdown
     @GetMapping("/admin/stations-dropdown")
     public ResponseEntity<?> getStationsDropdown() {
-        return ResponseEntity.ok(stationRepository.findAll());
+        return ResponseEntity.ok(bikeService.getAllStations()); // Gọi qua Service
     }
-
     // 🔴 THÊM API: Admin thêm xe mới (Không cần Token Manager)
     @PostMapping("/admin")
     public ResponseEntity<?> addVehicleByAdmin(@RequestBody BikeDTO.CreateRequest request) {

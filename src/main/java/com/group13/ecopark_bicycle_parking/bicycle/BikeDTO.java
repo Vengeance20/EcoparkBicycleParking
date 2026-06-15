@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 public class BikeDTO {
 
     @Data
@@ -40,6 +42,8 @@ public class BikeDTO {
         private String bikeCode;
         private Integer categoryId;
         private String categoryName; // 🔴 THÊM: Hiển thị tên loại xe
+        private BigDecimal baseFee;
+        private BigDecimal extraFee;
         private Integer stationId;
         private String stationName;  // 🔴 THÊM: Hiển thị tên trạm
         private String status;

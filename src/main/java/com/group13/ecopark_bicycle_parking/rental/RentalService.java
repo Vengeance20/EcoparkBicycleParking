@@ -47,6 +47,9 @@ public class RentalService {
             throw new RuntimeException("Lỗi: Số dư ví không đủ. Cần tối thiểu " + depositAmount + " điểm để tạm ứng.");
         }
 
+        // 🔴 KIỂM TRA CƯ DÂN: Nếu tài khoản là cư dân thì áp dụng giảm 40%, ngược lại 0%
+        int discountPercent = user.isResident() ? 40 : 0;
+
         Rental rental = Rental.builder()
                 .user(user)
                 .bike(bike)
@@ -54,7 +57,7 @@ public class RentalService {
                 .startTime(LocalDateTime.now())
                 .status("ACTIVE")
                 .penaltyFee(BigDecimal.ZERO)
-                .discount(0)
+                .discount(discountPercent) // 🔴 Đã chuyển giá trị giảm giá vào Entity để lưu xuống MySQL
                 .build();
         rental = rentalRepository.save(rental);
 
@@ -107,11 +110,16 @@ public class RentalService {
                 .transactionType("RENTAL_DEPOSIT").build();
         walletTransactionRepository.save(tx);
 
+        // 🔴 KIỂM TRA CƯ DÂN: Áp dụng lưu mã giảm giá ngay từ luồng đặt xe trước
+        int discountPercent = user.isResident() ? 40 : 0;
+
         Rental rental = Rental.builder()
                 .user(user).bike(bike).startStation(bike.getStation())
                 .reservedAt(LocalDateTime.now())
                 .status("RESERVED")
-                .penaltyFee(BigDecimal.ZERO).discount(0).build();
+                .penaltyFee(BigDecimal.ZERO)
+                .discount(discountPercent) // 🔴 Đã chuyển giá trị giảm giá vào Entity để lưu xuống MySQL
+                .build();
         rental = rentalRepository.save(rental);
 
         bike.setStatus("RESERVED");
@@ -128,7 +136,6 @@ public class RentalService {
 
     @Transactional
     public String unlockBike(Integer userId, String bikeCode) {
-        // 🔴 ĐÃ SỬA TÊN HÀM cho khớp với RentalRepository
         List<String> statuses = Arrays.asList("RESERVED");
         List<Rental> rentals = rentalRepository.findAllByUserUserIdAndStatusIn(userId, statuses);
 
@@ -287,7 +294,6 @@ public class RentalService {
 
     @Transactional(readOnly = true)
     public RentalDTO.RentResponse getMyActiveRental(Integer userId) {
-        // 🔴 ĐÃ SỬA TÊN HÀM cho khớp với RentalRepository
         List<String> activeStatuses = Arrays.asList("ACTIVE", "RESERVED");
         List<Rental> rentals = rentalRepository.findAllByUserUserIdAndStatusIn(userId, activeStatuses);
 
@@ -302,5 +308,4 @@ public class RentalService {
                 rental.getStatus()
         );
     }
-
 }
