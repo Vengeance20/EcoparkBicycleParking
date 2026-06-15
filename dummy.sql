@@ -1,69 +1,91 @@
--- ========================================================
--- 1. THÊM DỮ LIỆU NGƯỜI DÙNG (USERS)
--- ========================================================
--- Mật khẩu dummy đều là: 123456 (đã được băm bằng BCrypt giả định)
-INSERT INTO users (user_id, username, password_hash, full_name, email, national_id, phone_number, role, wallet_balance, is_deleted) VALUES
-                                                                                                                                        (1, 'admin01', '$2a$10$dummyHashAdmin...', 'Hệ Thống Admin', 'admin@ecopark.vn', '001099111222', '0901111222', 'ADMIN', 0.00, false),
-                                                                                                                                        (2, 'manager01', '$2a$10$dummyHashManager...', 'Trần Quản Lý', 'quanly1@ecopark.vn', '001099333444', '0903333444', 'MANAGER', 0.00, false),
-                                                                                                                                        (3, 'quang_customer', '$2a$10$dummyHashCustomer...', 'Nguyễn Văn Quang', 'quang@gmail.com', '001099555666', '0905555666', 'CUSTOMER', 158.00, false),
-                                                                                                                                        (4, 'mai_customer', '$2a$10$dummyHashCustomer...', 'Lê Hoàng Mai', 'mai.le@gmail.com', '001099777888', '0907777888', 'CUSTOMER', 50.00, false);
+USE ecopark_bike_1;
 
--- ========================================================
--- 2. THÊM DỮ LIỆU BÃI XE (STATIONS)
--- ========================================================
-INSERT INTO stations (station_id, name, latitude, longitude, capacity, status, is_deleted) VALUES
-                                                                                               (1, 'Bãi xe Công viên Mùa Thu', 20.96345100, 105.93152600, 20, 'ACTIVE', false),
-                                                                                               (2, 'Bãi xe Hồ Thiên Nga', 20.95781200, 105.93412000, 15, 'ACTIVE', false);
+-- Tắt kiểm tra khóa ngoại để tránh lỗi khi reset dữ liệu nhiều lần
+SET FOREIGN_KEY_CHECKS = 0;
 
--- ========================================================
--- 3. PHÂN CÔNG QUẢN LÝ (STATION MANAGERS)
--- ========================================================
--- Phân công Manager Trần Quản Lý (ID: 2) coi sóc Bãi xe Mùa Thu (ID: 1)
-INSERT INTO station_managers (assignment_id, manager_id, station_id) VALUES
-    (1, 2, 1);
+TRUNCATE TABLE rentals;
+TRUNCATE TABLE wallet_transactions;
+TRUNCATE TABLE station_managers;
+TRUNCATE TABLE bikes;
+TRUNCATE TABLE stations;
+TRUNCATE TABLE bike_categories;
+TRUNCATE TABLE users;
+TRUNCATE TABLE system_configs;
 
--- ========================================================
--- 4. THÊM BẢNG GIÁ / DANH MỤC XE (VEHICLE CATEGORIES)
--- ========================================================
-INSERT INTO bike_categories (category_id, name, base_fee, extra_fee) VALUES
-                                                                         (1, 'SINGLE', 50.00, 10.00),     -- Xe đơn: 50đ/60p đầu, 10đ/15p lố
-                                                                         (2, 'DOUBLE', 80.00, 15.00),     -- Xe đôi: 80đ/60p đầu, 15đ/15p lố
-                                                                         (3, 'ELECTRIC', 100.00, 25.00);  -- Xe điện: 100đ/60p đầu, 25đ/15p lố
+-- 1. CẤU HÌNH HỆ THỐNG
+INSERT INTO system_configs (config_key, config_value) VALUES 
+('OPEN_HOUR', '05:00'),
+('CLOSE_HOUR', '23:00');
 
--- ========================================================
--- 5. THÊM DỮ LIỆU XE ĐẠP (BIKES)
--- ========================================================
-INSERT INTO bikes (bike_id, category_id, station_id, bike_code, status, is_deleted) VALUES
-                                                                                        (1, 1, 1, 'ECO-S-001', 'AVAILABLE', false), -- Xe đơn ở Công viên Mùa Thu
-                                                                                        (2, 1, 1, 'ECO-S-002', 'AVAILABLE', false), -- Xe đơn ở Công viên Mùa Thu
-                                                                                        (3, 3, 1, 'ECO-E-001', 'MAINTENANCE', false), -- Xe điện đang bảo trì
-                                                                                        (4, 2, 2, 'ECO-D-001', 'AVAILABLE', false), -- Xe đôi ở Hồ Thiên Nga
-                                                                                        (5, 1, NULL, 'ECO-S-003', 'IN_USE', false); -- Xe đơn đang được khách mượn (Station = NULL)
+-- 2. DANH MỤC LOẠI XE
+INSERT INTO bike_categories (name, base_fee, extra_fee) VALUES
+('SINGLE', 10000.00, 3000.00),
+('DOUBLE', 20000.00, 5000.00),
+('ELECTRIC', 30000.00, 10000.00);
 
--- ========================================================
--- 6. THÊM LỊCH SỬ CHUYẾN ĐI (RENTALS)
--- ========================================================
-INSERT INTO rentals (rental_id, user_id, bike_id, start_station_id, end_station_id, reserved_at, start_time, end_time, rental_fee, penalty_fee, discount, total_fee, status) VALUES
--- Chuyến 1: Khách Quang đi xe đơn đúng giờ (Dưới 60p) - Tổng phí 50, giảm 40% (Cư dân) -> Trả 30đ
-(1, 3, 1, 1, 2, '2023-10-01 07:00:00', '2023-10-01 07:05:00', '2023-10-01 07:45:00', 50.00, 0.00, 40, 30.00, 'COMPLETED'),
+-- 3. TÀI KHOẢN NGƯỜI DÙNG
+-- Mật khẩu cho tất cả tài khoản là: 123456 (Đã băm SHA-256)
+INSERT INTO users (username, password_hash, full_name, email, phone_number, national_id, role, wallet_balance, is_resident, is_locked, is_deleted, created_at) VALUES
+('admin1', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'Giám Đốc Hệ Thống', 'admin@ecopark.com', '0999999999', '001099000001', 'ADMIN', 0.00, false, false, false, NOW()),
+('manager1', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'Trưởng Trạm Khu A', 'manager@ecopark.com', '0888888888', '001099000002', 'MANAGER', 0.00, false, false, false, NOW()),
+('user1', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'Cư dân Rừng Cọ', 'cudan@gmail.com', '0123456789', '001099000003', 'USER', 250000.00, true, false, false, NOW()),
+('user2', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'Khách Tham Quan', 'khach@gmail.com', '0987654321', '001099000004', 'USER', 50000.00, false, false, false, NOW());
 
--- Chuyến 2: Khách Mai đi lố giờ (70p) -> Base 50 + 1 block extra 10 = 60đ (Không giảm giá)
-(2, 4, 4, 2, 1, '2023-10-02 16:00:00', '2023-10-02 16:02:00', '2023-10-02 17:12:00', 60.00, 0.00, 0, 60.00, 'COMPLETED'),
+-- 4. CÁC TRẠM ĐỖ XE (Tọa độ thực tế khu vực Ecopark)
+INSERT INTO stations (name, latitude, longitude, capacity, status, is_deleted) VALUES
+('Công viên Hồ Thiên Nga', 20.95750000, 105.93320000, 20, 'ACTIVE', false),
+('Khu phố Rừng Cọ', 20.96200000, 105.93600000, 15, 'ACTIVE', false),
+('Khu đô thị Aqua Bay', 20.95200000, 105.93000000, 30, 'ACTIVE', false);
 
--- Chuyến 3: Khách Quang đang mượn chiếc xe số 5, chưa trả nên end_time, fee đều NULL
-(3, 3, 5, 1, NULL, '2023-10-25 08:00:00', '2023-10-25 08:10:00', NULL, NULL, 0.00, 40, NULL, 'ACTIVE');
+-- 5. PHÂN CÔNG QUẢN LÝ TRẠM
+-- Gán manager1 quản lý trạm Hồ Thiên Nga (ID=1) và Rừng Cọ (ID=2)
+INSERT INTO station_managers (manager_id, station_id) VALUES 
+(2, 1),
+(2, 2);
 
--- ========================================================
--- 7. THÊM GIAO DỊCH VÍ (WALLET TRANSACTIONS)
--- ========================================================
-INSERT INTO wallet_transactions (transaction_id, user_id, rental_id, transaction_type, amount, created_at) VALUES
--- Lịch sử ví của Quang (User 3)
-(1, 3, NULL, 'TOPUP', 200.00, '2023-09-30 10:00:00'),          -- Nạp 200đ
-(2, 3, 1, 'RENTAL_PAYMENT', -30.00, '2023-10-01 07:45:00'),   -- Thanh toán chuyến 1 (-30đ)
-(3, 3, 3, 'RENTAL_DEPOSIT', -12.00, '2023-10-25 08:10:00'),   -- Trừ tạm ứng/cọc chuyến 3 đang đi (-12đ)
--- Note: Số dư hiện tại của Quang = 200 - 30 - 12 = 158.00 (Khớp với cột wallet_balance ở bảng Users)
+-- 6. DỮ LIỆU XE ĐẠP
+INSERT INTO bikes (bike_code, category_id, station_id, status, is_deleted) VALUES
+('ECO-S-001', 1, 1, 'AVAILABLE', false),
+('ECO-S-002', 1, 1, 'AVAILABLE', false),
+('ECO-D-001', 2, 1, 'AVAILABLE', false),
+('ECO-E-001', 3, 2, 'AVAILABLE', false),
+('ECO-E-002', 3, 2, 'AVAILABLE', false),
+('ECO-S-003', 1, 3, 'AVAILABLE', false),
+('ECO-D-002', 2, 3, 'MAINTENANCE', false),
+('ECO-S-004', 1, 3, 'IN_USE', false),
+('ECO-E-003', 3, 3, 'RESERVED', false);
 
--- Lịch sử ví của Mai (User 4)
-(4, 4, NULL, 'TOPUP', 110.00, '2023-10-02 15:30:00'),         -- Nạp 110đ
-(5, 4, 2, 'RENTAL_PAYMENT', -60.00, '2023-10-02 17:12:00');   -- Thanh toán chuyến 2 (-60đ)
--- Note: Số dư hiện tại của Mai = 110 - 60 = 50.00 (Khớp với cột wallet_balance ở bảng Users)
+-- 7. LỊCH SỬ NẠP TIỀN VÀO VÍ
+INSERT INTO wallet_transactions (user_id, rental_id, transaction_type, amount, created_at) VALUES
+(3, NULL, 'TOPUP', 250000.00, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(4, NULL, 'TOPUP', 50000.00, DATE_SUB(NOW(), INTERVAL 1 DAY));
+
+-- 8. LỊCH SỬ CHUYẾN ĐI (Rentals)
+-- Chuyến đi đã hoàn thành của Khách tham quan (Không giảm giá)
+INSERT INTO rentals (user_id, bike_id, start_station_id, end_station_id, start_time, end_time, rental_fee, penalty_fee, discount, total_fee, status) VALUES
+(4, 1, 1, 2, DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 1 HOUR), 13000.00, 0.00, 0, 13000.00, 'COMPLETED');
+
+-- Chuyến đi đã hoàn thành của Cư dân (Giảm giá 40%)
+INSERT INTO rentals (user_id, bike_id, start_station_id, end_station_id, start_time, end_time, rental_fee, penalty_fee, discount, total_fee, status) VALUES
+(3, 4, 2, 1, DATE_SUB(NOW(), INTERVAL 3 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR), 30000.00, 0.00, 40, 18000.00, 'COMPLETED');
+
+-- Chuyến đi đang chạy (IN_USE)
+INSERT INTO rentals (user_id, bike_id, start_station_id, end_station_id, start_time, end_time, rental_fee, penalty_fee, discount, total_fee, status) VALUES
+(3, 8, 3, NULL, DATE_SUB(NOW(), INTERVAL 30 MINUTE), NULL, 0.00, 0.00, 40, 0.00, 'ACTIVE');
+
+-- Đơn đang đặt trước giữ xe (RESERVED)
+INSERT INTO rentals (user_id, bike_id, start_station_id, end_station_id, reserved_at, start_time, end_time, rental_fee, penalty_fee, discount, total_fee, status) VALUES
+(4, 9, 3, NULL, DATE_SUB(NOW(), INTERVAL 5 MINUTE), NULL, NULL, 0.00, 0.00, 0, 0.00, 'RESERVED');
+
+-- 9. GHI NHẬN DOANH THU CHUYẾN ĐI VÀO SỔ CÁI (Wallet Transactions)
+-- Lịch sử cho chuyến đi 1
+INSERT INTO wallet_transactions (user_id, rental_id, transaction_type, amount, created_at) VALUES (4, 1, 'RENTAL_PAYMENT', -13000.00, DATE_SUB(NOW(), INTERVAL 1 HOUR));
+-- Lịch sử cho chuyến đi 2
+INSERT INTO wallet_transactions (user_id, rental_id, transaction_type, amount, created_at) VALUES (3, 2, 'RENTAL_PAYMENT', -18000.00, DATE_SUB(NOW(), INTERVAL 2 HOUR));
+-- Tạm ứng cho đơn xe đang chạy
+INSERT INTO wallet_transactions (user_id, rental_id, transaction_type, amount, created_at) VALUES (3, 3, 'RENTAL_DEPOSIT', -10000.00, DATE_SUB(NOW(), INTERVAL 30 MINUTE));
+-- Tạm ứng cho đơn đặt trước
+INSERT INTO wallet_transactions (user_id, rental_id, transaction_type, amount, created_at) VALUES (4, 4, 'RENTAL_DEPOSIT', -30000.00, DATE_SUB(NOW(), INTERVAL 5 MINUTE));
+
+-- Bật lại kiểm tra khóa ngoại
+SET FOREIGN_KEY_CHECKS = 1;

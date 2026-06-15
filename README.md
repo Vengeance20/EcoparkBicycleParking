@@ -1,173 +1,241 @@
-# Ecopark Bicycle Parking
+# Ecopark Bicycle Parking System
 
-Backend Spring Boot cho hệ thống thuê xe đạp Ecopark.
+Welcome to the **Ecopark Bicycle Parking System**, developed by **Group 12**. This project is a smart bicycle rental and reservation management system with a fully separated architecture consisting of a Spring Boot REST API backend and a static web frontend.
 
-## Yêu cầu môi trường
+---
 
-- Java JDK 21
-- XAMPP có MySQL/MariaDB
-- Maven Wrapper đã có sẵn trong repo: `mvnw`, `mvnw.cmd`
+# Technologies Used
 
-## Cách khởi động
+## Backend
 
-1. Bật XAMPP và start MySQL.
-2. Vào `http://localhost/phpmyadmin/`.
-3. Create database tên `ecopark_bike`.
-4. Vào tab SQL của database `ecopark_bike`.
-5. Copy toàn bộ nội dung file `Dummy SQL data.txt` vào ô SQL rồi chạy.
-6. Mở terminal tại thư mục project.
-7. Chạy backend:
+* **Language:** Java 21 (LTS)
+* **Framework:** Spring Boot 3.5.11
+* **Security:** Spring Security & Stateless JSON Web Token (JJWT 0.12.3)
+* **ORM & Data Access:** Spring Data JPA / Hibernate
+* **Database:** MySQL Server
+* **Build Tool:** Apache Maven
 
-```powershell
-.\mvnw spring-boot:run
-```
+## Frontend
 
-Nếu chạy trong Linux/macOS/WSL:
+* **Platform:** HTML5, Vanilla JavaScript (ES6)
+* **CSS Framework:** TailwindCSS (CDN)
+* **Map Integration:** Leaflet.js (GPS-based station search)
+* **Charts & Analytics:** Chart.js (Admin Dashboard)
+
+---
+
+# Prerequisites
+
+Before running the project, ensure the following software is installed on your machine:
+
+1. Java Development Kit (JDK) 21 or higher
+2. Apache Maven 3.8+
+3. MySQL Server 8.0+
+4. Modern Web Browser (Chrome, Edge, Brave, etc.)
+5. Recommended IDEs:
+
+   * IntelliJ IDEA
+   * Eclipse
+
+Verify your installations:
 
 ```bash
-./mvnw spring-boot:run
+java -version
+mvn -version
 ```
 
-Backend mặc định chạy tại:
+---
+
+# Installation and Setup
+
+## Step 1: Set Up the Database Using XAMPP
+
+### Install XAMPP
+
+Download and install XAMPP from:
+
+https://www.apachefriends.org/
+
+### Start the Database Server
+
+1. Open **XAMPP Control Panel**.
+2. Start the **MySQL** service.
+3. Ensure the status indicator turns green.
+
+### Create the Database
+
+1. Open phpMyAdmin:
 
 ```text
-http://localhost:8080
+http://localhost/phpmyadmin
 ```
 
-Database config hiện tại ở `src/main/resources/application.properties`:
+2. Click **New** in the left sidebar.
+3. Create a database named:
+
+```text
+ecopark_bike_1
+```
+
+4. Select:
+
+```text
+utf8mb4_unicode_ci
+```
+
+as the collation.
+
+Alternatively, execute:
+
+```sql
+CREATE DATABASE ecopark_bike_db
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+```
+
+5. Add dummy SQL queries from the file
+```text
+Dummy.sql
+```
+
+for testing (All users have the same password 123456 for logging in)
+
+### Configure Spring Boot
+
+Open:
+
+```text
+src/main/resources/application.properties
+```
+
+and update the database configuration:
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/ecopark_bike?useSSL=false&serverTimezone=UTC
+spring.datasource.url=jdbc:mysql://localhost:3306/ecopark_bike_1?createDatabaseIfNotExist=true
 spring.datasource.username=root
 spring.datasource.password=
-spring.jpa.hibernate.ddl-auto=update
+
+spring.jpa.hibernate.ddl-auto=update 
+spring.jpa.show-sql=true
 ```
 
-Lưu ý: nếu import `Dummy SQL data.txt` báo lỗi thiếu bảng, hãy chạy backend một lần để Hibernate tạo bảng, dừng app, rồi import lại file SQL.
+> By default, XAMPP uses the username `root` with an empty password.
 
-## API hiện có
+### Verify Database Connection
 
-### U4 - Tìm kiếm bãi và xe
+After starting the Spring Boot application, Hibernate will automatically create the required tables inside the `ecopark_bike_1` database.
 
-#### Xem danh sách bãi trên bản đồ
+You can verify the tables by opening:
 
-```http
-GET /apiv1/search/stations
+```text
+http://localhost/phpmyadmin
 ```
 
-Query params:
+and selecting the `ecopark_bike_1` database.
 
-- `latitude`: vĩ độ hiện tại của user, optional.
-- `longitude`: kinh độ hiện tại của user, optional.
-- `radiusKm`: lọc bãi trong bán kính km, optional, chỉ dùng khi có `latitude` và `longitude`.
-- `keyword`: tìm theo tên bãi, optional.
-- `availableOnly`: `true` để chỉ lấy bãi còn xe `AVAILABLE`, optional.
 
-Ví dụ test:
+---
 
-```powershell
-curl.exe "http://localhost:8080/apiv1/search/stations"
-curl.exe "http://localhost:8080/apiv1/search/stations?latitude=20.963451&longitude=105.931526&radiusKm=2"
-curl.exe "http://localhost:8080/apiv1/search/stations?keyword=xe&availableOnly=true"
+# Running the Backend (Spring Boot)
+
+## Option 1: Using Maven
+
+Open a terminal in the project root directory (where `pom.xml` is located).
+
+### Build the project
+
+```bash
+mvn clean install
 ```
 
-Response gồm thông tin bãi, tọa độ, sức chứa, tổng số xe, số xe khả dụng, số slot trống, khoảng cách và số xe khả dụng theo loại.
+### Start the Spring Boot application
 
-#### Xem chi tiết một bãi và danh sách xe
-
-```http
-GET /apiv1/search/stations/{stationId}
+```bash
+mvn spring-boot:run
 ```
 
-Query params:
+---
 
-- `bikeStatus`: lọc xe theo trạng thái, ví dụ `AVAILABLE`, `MAINTENANCE`, optional.
+## Option 2: Using IntelliJ IDEA
 
-Ví dụ test:
+1. Open IntelliJ IDEA.
+2. Select **Open** and choose the backend project folder.
+3. Wait for Maven to download all dependencies.
+4. Locate:
 
-```powershell
-curl.exe "http://localhost:8080/apiv1/search/stations/1"
-curl.exe "http://localhost:8080/apiv1/search/stations/1?bikeStatus=AVAILABLE"
+```text
+EcoparkBicycleParkingApplication.java
 ```
 
-#### Xem xe khả dụng tại một bãi
+5. Click the **Run** button.
 
-```http
-GET /apiv1/search/stations/{stationId}/available-bikes
+
+---
+
+# Running the Frontend
+
+Open this in your browser:
+
+```text
+http://localhost:8080/RegisterLoginPage.html
 ```
 
-Ví dụ test:
+This serves as the main entry page for user registration and login.
 
-```powershell
-curl.exe "http://localhost:8080/apiv1/search/stations/1/available-bikes"
+---
+
+# Troubleshooting
+
+## Database Connection Error
+
+Verify:
+
+* MySQL Server is running.
+* Database `ecopark_bike_db` exists.
+* Username and password are correct.
+
+
+---
+
+## Maven Dependency Issues
+
+Clear and rebuild dependencies:
+
+```bash
+mvn clean
+mvn dependency:purge-local-repository
+mvn install
 ```
 
-### U5 - Thuê / đặt / mở khóa xe
+---
 
-#### Thuê xe ngay
+## Java Version Mismatch
 
-```http
-POST /apiv1/rentals/rent
-Content-Type: application/json
+Verify the active Java version:
+
+```bash
+java -version
 ```
 
-Body:
+Ensure Java 21 is being used.
 
-```json
-{
-  "userId": 3,
-  "bikeCode": "ECO-S-001"
-}
-```
+---
 
-Ví dụ test:
+# Team
 
-```powershell
-curl.exe -X POST "http://localhost:8080/apiv1/rentals/rent" -H "Content-Type: application/json" -d "{\"userId\":3,\"bikeCode\":\"ECO-S-001\"}"
-```
+**Group 12**
 
-#### Đặt xe trước
+[Bui Cong Minh](https://github.com/Vengeance20)
 
-```http
-POST /apiv1/rentals/reserve
-Content-Type: application/json
-```
+Special thanks:
 
-Body:
+[Tran Ngoc Minh](https://github.com/WiuHz)
 
-```json
-{
-  "userId": 3,
-  "bikeCode": "ECO-S-001"
-}
-```
+[Pham Quang Minh](https://github.com/Hiiamming)
 
-Ví dụ test:
+[Bui Nam Khanh](https://github.com/Kain1k)
 
-```powershell
-curl.exe -X POST "http://localhost:8080/apiv1/rentals/reserve" -H "Content-Type: application/json" -d "{\"userId\":3,\"bikeCode\":\"ECO-S-001\"}"
-```
+[Dang Duc Thinh](https://github.com/ThinhDang22)
 
-#### Mở khóa xe đã đặt
-
-```http
-POST /apiv1/rentals/unlock
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{
-  "userId": 3,
-  "bikeCode": "ECO-S-001"
-}
-```
-
-Ví dụ test:
-
-```powershell
-curl.exe -X POST "http://localhost:8080/apiv1/rentals/unlock" -H "Content-Type: application/json" -d "{\"userId\":3,\"bikeCode\":\"ECO-S-001\"}"
-```
-
+Ph.D Bui Thi Mai Anh for guidance from the beginning of the course
 
